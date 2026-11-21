@@ -12,6 +12,14 @@ python3 -m chonoi.live --mode gather --inventory-out kho.json   # buổi sáng: 
 python3 -m chonoi.live --mode quan --inventory kho.json         # buổi tối: chạy sau khi buổi sáng kết thúc (Ctrl+C lệnh trên)
 ```
 
+**Chơi trọn vòng ngày (khuyến nghị, Phase 2):** sáng → tối → cửa hàng, lặp 1–5 ngày, chỉ cần một lệnh:
+
+```bash
+python3 -m chonoi.live --mode day --days 5
+```
+
+Có menu chính, màn giới thiệu ngày / buổi tối, kết quả ngày, cửa hàng nâng cấp (oxy, Máu) và tổng kết. Các màn chờ chỉ là lớp giao diện: sim đứng yên trong lúc chúng hiện, nên luật và kết quả headless không đổi.
+
 Buổi sáng ghi `kho.json` khi kết thúc (cập bến, hết giờ hoặc ngất → kho rỗng). Buổi tối đọc đúng file đó làm kho nguyên liệu. Thêm `--seed N` hoặc `--port N` nếu cần. Chạy riêng một buổi: bỏ cờ kho (quán sẽ có kho rỗng).
 
 ## Điều khiển
@@ -21,6 +29,9 @@ Buổi sáng ghi `kho.json` khi kết thúc (cập bến, hết giờ hoặc ng�
 | **W A S D** hoặc **mũi tên** | Bơi (sáng, `S` = lặn xuống) / đi (tối, `W` = lên phía bắc) |
 | **E** | Sáng: cập bến (trong vùng bến) hoặc hái bông (ở mặt nước). Tối: nấu ở bếp, lấy món chín, phục vụ khách ở bàn |
 | **Space** | Sáng: bắt đàn cá khi đang dưới nước |
+| **Enter** (hoặc bấm chuột) | Qua màn chờ; ở cửa hàng: xong, sang ngày mới |
+| **1** / **2** (hoặc bấm vào ô) | Cửa hàng: mua nâng cấp bình oxy / thêm Máu |
+| **P** hoặc **Esc** | Tạm dừng / tiếp tục |
 | **R** | Chơi lại |
 
 Màn hình luôn hiện gợi ý phím gần nhất ("E: hái bông súng", "E: phục vụ"…), thông báo nhanh khi có sự kiện, và HUD:
