@@ -36,3 +36,4 @@
 - **Phase 2:** Nâng cấp Test Contract v1.1 (`--mode day --days 1..5`, `Shop`, `Pause`, cá bơi/sinh, Cá Sấu M1/M2); tách test regression `test_gather_p2` & `test_day_pause_shop`; nhắc giữ bản sao list trong `snapshot()` tránh đột biến tham chiếu giữa các tick.
 - **Phase 2 QA:** Bổ sung skill `qa-regression` cho kiểm chứng v1.1 và hồi quy Phase 1.
 - **Phase 3:** Chuyển Test Contract v1.2 (kho cá thể `[{id, kind, fresh}]`, từ chối kho đếm cũ mã `2`); dùng `fractions.Fraction` trong `chonoi/inventory.py` để giữ chính xác tuyệt đối ở ngưỡng ươn `< 30` và phép `floor`; giữ `IdAllocator` cho `I1..` xuyên pha và Ngày trong `runner.py`.
+- **Phase 4:** Nâng Contract v1.3, bổ sung `chonoi/bench.py` (`bench_cmd`) và `chonoi/soak.py` (`soak_cmd`, lặp kế hoạch D1–D5 ở Ngày 6–10); hoàn tất kiểm chứng tổng, retro, phản tư cá nhân và phát hành `v1.0.0`.

@@ -1,0 +1,6 @@
+# chipno39 — phản tư cá nhân (≤ 200 từ)
+
+- **Tôi đã làm:** Phụ trách module `sim/gather` và vai Integrator xuyên suốt 4 phase: kickoff `TEAM.md` & `game.contract.json` (`17e7ad1`), chốt hợp đồng tích hợp (`4132bad`), hoàn thiện `gather.py` Lát 1–2 (`4ee12a7`), tạo skill `phase-release-check` & cập nhật `AGENTS.md` (`824b80f`), nâng Contract v1.1 + cá bơi/sinh + Cá Sấu Năm Chèo (`b326353`, `0c97999`), cài `--mode day` + Shop + Pause (`e486b79`, `ff655ce`), dẫn dắt migration Contract v1.2 độ tươi & kho cá thể (`fef6fc0`), viết `bench.py`/`soak.py` v1.3 và gắn tag `phase-1`..`phase-4` + Release `v1.0.0`.
+- **Tôi đã review & hỗ trợ:** Review và gộp sạch nhánh của Huy (`feat/p1-quan`, `feat/p2-quan`, `feat/p3-quan`), Duy (`duy`), Đức Anh (`qa/*`); đồng bộ tham số `dishes` với Huy ở `runner.py` và chốt sớm hợp đồng để cả 4 người chạy song song không xung đột code.
+- **AI sai ở đâu & cách phát hiện:** AI ban đầu trả tham chiếu list trực tiếp trong `GatherSim.snapshot()` khiến snapshot tick trước bị đột biến theo tick sau — phát hiện qua unit test recoil của Cá Sấu ở tick 61 và sửa ngay sang sao chép list.
+- **Điều tôi học được:** Chốt hợp đồng tích hợp sớm, tách ranh giới file rõ và dùng nhánh tính năng khi đổi schema giúp nhóm 4 người giữ `main` luôn xanh xuyên suốt 4 phase.
