@@ -13,7 +13,22 @@ Kiểm tra kèm theo:
 - Chạy script của `index.html` trong Node với canvas giả, nạp snapshot thật của hai chế độ ở nhiều kích thước màn hình và cả snapshot thiếu hầu hết trường → không có lỗi runtime.
 - `unittest`: 44/44 xanh (máy Windows cần alias `python3`).
 
+## Chơi thử với luật `quan` thật (nhánh `feat/p1-quan` của Huy, commit e4853a8)
+
+`play_quan.py` điều khiển `chonoi.live` qua `POST /input` (đi tới bếp, E nấu, E lấy món, đi tới bàn, E phục vụ) và chụp bằng Edge ở từng giai đoạn. Kho đầu vào `{"items":{"ca_loc":1}}`.
+
+| Ảnh | Giai đoạn |
+|---|---|
+| `quan-live-1-khach-cho.png` | khách C1 đến (tick 120), món gọi + thanh kiên nhẫn đầy |
+| `quan-live-2-dang-nau.png` | bếp B1 đang nấu, kho đã bị trừ |
+| `quan-live-3-cam-mon.png` | món trên tay (`hand` là chuỗi `dish_id`), bếp về trống |
+| `quan-live-4-khach-an.png` | phục vụ xong, thanh ăn, uy tín 3.2, "boa 12k" |
+
+Kết quả in ra: sau khi khách ăn xong `money = 72` (60 + boa 12), `reputation = 3.2`, `score = 372` (trùng ví dụ dòng `end` trong PRD-0).
+
+UI nhận cả hai dạng `hand` (chuỗi `dish_id` hiện tại / payload `{order_id,dish_id,base_price}` theo PRD) và cả hai bộ giá trị `order_status`; kho hiển thị là kho khả dụng = `stock` trừ tổng `customers[].reserved`.
+
 Giới hạn trung thực:
-- Chưa kiểm UI với luật `quan` thật của Huy (khách tự đến, bếp, bưng, trả tiền): chỉ thử bằng scenario. Hiển thị "kho" ở quán hiện là `stock` nguyên dạng, chưa trừ phần giữ chỗ (chờ chốt dạng snapshot).
-- Ở `quan-end.png` khách vẫn ngồi sau khi hết ca vì luật đóng ca của `quan` chưa làm; đó là việc của sim, không phải UI.
-- Chưa thử bằng tay qua phím (bơi, hái, nấu, phục vụ) trên trình duyệt thật.
+- Chơi qua HTTP `/input` do script gửi, chưa phải gõ phím tay trên trình duyệt thật.
+- Ở `quan-end.png` khách vẫn ngồi sau khi hết ca vì luật đóng ca của `quan` chưa làm (việc của sim; đã báo Huy).
+- Chưa kiểm `gather` với luật thật qua trình duyệt; mới kiểm bằng scenario.
