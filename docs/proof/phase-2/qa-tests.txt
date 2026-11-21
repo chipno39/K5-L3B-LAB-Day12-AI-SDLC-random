@@ -2,12 +2,13 @@ PYTHONPATH=tests:. python3 -m unittest test_qa_p2 test_day_pause_shop -v
 test_day_cli_is_deterministic_through_shop_and_finishes_one_day (test_qa_p2.Phase2QA) ... ok
 test_day_cli_rejects_invalid_day_counts_before_writing (test_qa_p2.Phase2QA) ... ok
 test_quan_accepts_new_ingredient_and_reserves_recipe (test_qa_p2.Phase2QA) ... ok
+test_quan_serving_new_dish_pays_once_after_eating (test_qa_p2.Phase2QA) ... ok
 test_day_1_full_cycle_dock_quan_shop_buy_and_apply_day_2 (test_day_pause_shop.DayAndShopTests) ... ok
 test_day_completes_on_shop_timeout_and_buy_failed_funds (test_day_pause_shop.DayAndShopTests) ... ok
 test_pause_freezes_sim_tick_and_resume_steps_immediately (test_day_pause_shop.PauseTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 6 tests in 0.310s
+Ran 7 tests in 0.376s
 
 OK
 PYTHONPATH=tests:. python3 -m unittest test_smoke_p1 test_gather_rules test_quan_scenario -v
@@ -60,7 +61,7 @@ test_shift_end_emits_time_event_once_at_last_tick (test_quan_scenario.QuanSimula
 test_walk_reaches_contract_speed_and_respects_bounds (test_quan_scenario.QuanSimulationTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 43 tests in 2.390s
+Ran 43 tests in 2.359s
 
 OK
 PYTHONPATH=tests:. python3 -m unittest discover -s tests -v
@@ -99,6 +100,7 @@ test_session_steps_gather_and_dock (test_python_starter_units.Units) ... ok
 test_day_cli_is_deterministic_through_shop_and_finishes_one_day (test_qa_p2.Phase2QA) ... ok
 test_day_cli_rejects_invalid_day_counts_before_writing (test_qa_p2.Phase2QA) ... ok
 test_quan_accepts_new_ingredient_and_reserves_recipe (test_qa_p2.Phase2QA) ... ok
+test_quan_serving_new_dish_pays_once_after_eating (test_qa_p2.Phase2QA) ... ok
 test_duplicate_customer_ids_and_table_assignments_are_rejected (test_quan_scenario.QuanScenarioTests) ... ok
 test_invalid_stock_item_or_count_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
 test_malformed_player_velocity_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
@@ -141,6 +143,6 @@ test_too_few_members (test_team_check.TeamCheck) ... ok
 test_wrong_size_duplicate_and_outsider (test_team_check.TeamCheck) ... ok
 
 ----------------------------------------------------------------------
-Ran 71 tests in 3.433s
+Ran 72 tests in 3.429s
 
 OK
