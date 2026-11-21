@@ -1,0 +1,146 @@
+PYTHONPATH=tests:. python3 -m unittest test_qa_p2 test_day_pause_shop -v
+test_day_cli_is_deterministic_through_shop_and_finishes_one_day (test_qa_p2.Phase2QA) ... ok
+test_day_cli_rejects_invalid_day_counts_before_writing (test_qa_p2.Phase2QA) ... ok
+test_quan_accepts_new_ingredient_and_reserves_recipe (test_qa_p2.Phase2QA) ... ok
+test_day_1_full_cycle_dock_quan_shop_buy_and_apply_day_2 (test_day_pause_shop.DayAndShopTests) ... ok
+test_day_completes_on_shop_timeout_and_buy_failed_funds (test_day_pause_shop.DayAndShopTests) ... ok
+test_pause_freezes_sim_tick_and_resume_steps_immediately (test_day_pause_shop.PauseTests) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.310s
+
+OK
+PYTHONPATH=tests:. python3 -m unittest test_smoke_p1 test_gather_rules test_quan_scenario -v
+test_con_01_ticks_zero_and_end_line (test_smoke_p1.Contract) ... ok
+test_con_02_deterministic_bytes (test_smoke_p1.Contract) ... ok
+test_con_03_bad_input_exit_2 (test_smoke_p1.Contract) ... ok
+test_con_03_old_and_future_modes_rejected (test_smoke_p1.Contract) ... ok
+test_gather_snapshot_has_gather_fields (test_smoke_p1.Contract) ... ok
+test_scenario_out_of_domain_exit_2 (test_smoke_p1.Contract) ... ok
+test_inv_01_gather_writes_inventory_quan_reads_it (test_smoke_p1.Integration)
+Ví dụ smoke test trong PRD-0 mục G: cập bến ở tick 0, quán đọc kho đúng nội dung. ... ok
+test_inv_01_not_written_when_tick_limit_first (test_smoke_p1.Integration) ... ok
+test_inv_bad_schema_exit_2 (test_smoke_p1.Integration) ... ok
+test_inventory_and_scenario_stock_conflict (test_smoke_p1.Integration) ... ok
+test_inventory_flags_mode_mismatch_exit_2 (test_smoke_p1.Integration) ... ok
+test_move_01_swim_speed_after_ramp (test_smoke_p1.Movement)
+Bỏ 6 tick tăng tốc rồi đo 60 tick: quãng ≈ swim_speed × 1 s (±0.1). Ngang, xuống, chéo (không nhanh hơn). ... ok
+test_move_02_heading_positive_is_down (test_smoke_p1.Movement) ... ok
+test_move_03_edge_clamp (test_smoke_p1.Movement)
+Chặn từng mép của vùng nước, kể cả d không âm (không bay lên khỏi mặt nước) và đáy d = 30. ... ok
+test_move_mep_vel_ve_0 (test_smoke_p1.Movement) ... ok
+test_move_ramp_doi_huong_trong_tran (test_smoke_p1.Movement)
+Đảo từ +speed sang -speed: vận tốc chạm mục tiêu sau tối đa ramp_max_ticks tick kể từ lúc đổi input. ... ok
+test_time_ends_gather_and_keeps_hold (test_smoke_p1.Movement) ... ok
+test_khoi_sai_mode_exit_2 (test_smoke_p1.ScenarioModes) ... ok
+test_quan_fixture_khong_hop_le_exit_2 (test_smoke_p1.ScenarioModes) ... ok
+test_quan_player_vel_hop_le (test_smoke_p1.ScenarioModes) ... ok
+test_dive_and_surface_events (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_faint_drops_hold_lifo_and_ends_with_empty_inventory (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_oxygen_empty_and_choke_at_t_plus_59 (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_surface_on_choke_tick_prevents_choke_and_refills (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_catch_cooldown_usable_at_exact_t_plus_L (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_catch_hold_full_keeps_fish_and_no_cooldown (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_catch_ignored_at_surface (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_catch_underwater_tiebreak_and_cooldown (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_dock_priority_over_gather (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_gather_hold_full_keeps_node_ready (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_gather_nearest_tiebreak_by_id_and_regrow (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_last_tick_gather_included_in_time_end_inventory (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_duplicate_customer_ids_and_table_assignments_are_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_invalid_stock_item_or_count_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_malformed_player_velocity_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_player_position_outside_contract_bounds_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_time_left_must_be_integer_inside_shift (test_quan_scenario.QuanScenarioTests) ... ok
+test_unknown_scenario_field_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_valid_quan_fixture_accepts_stock_player_and_customer (test_quan_scenario.QuanScenarioTests) ... ok
+test_default_shift_timer_uses_contract_duration (test_quan_scenario.QuanSimulationTests) ... ok
+test_player_is_clamped_at_room_edge_and_velocity_stops (test_quan_scenario.QuanSimulationTests) ... ok
+test_shift_end_emits_time_event_once_at_last_tick (test_quan_scenario.QuanSimulationTests) ... ok
+test_walk_reaches_contract_speed_and_respects_bounds (test_quan_scenario.QuanSimulationTests) ... ok
+
+----------------------------------------------------------------------
+Ran 43 tests in 2.390s
+
+OK
+PYTHONPATH=tests:. python3 -m unittest discover -s tests -v
+test_day_1_full_cycle_dock_quan_shop_buy_and_apply_day_2 (test_day_pause_shop.DayAndShopTests) ... ok
+test_day_completes_on_shop_timeout_and_buy_failed_funds (test_day_pause_shop.DayAndShopTests) ... ok
+test_pause_freezes_sim_tick_and_resume_steps_immediately (test_day_pause_shop.PauseTests) ... ok
+test_catch_ca_keo_yield_2_and_keo_neo_harvest (test_gather_p2.GatherP2FishSwimAndSpawn) ... ok
+test_fish_scheduled_spawn_at_360_and_cap_12 (test_gather_p2.GatherP2FishSwimAndSpawn) ... ok
+test_fish_swim_turn_and_reflect_boundary (test_gather_p2.GatherP2FishSwimAndSpawn) ... ok
+test_initial_8_distinct_fish_and_6_nodes_and_1_monster (test_gather_p2.GatherP2FishSwimAndSpawn) ... ok
+test_random_fish_false_freezes_fish_and_disables_spawn (test_gather_p2.GatherP2FishSwimAndSpawn) ... ok
+test_choke_pierces_invuln_and_keeps_hold (test_gather_p2.GatherP2MonstersAndFaint) ... ok
+test_monster_hit_causes_faint_with_remaining_hold_lifo (test_gather_p2.GatherP2MonstersAndFaint) ... ok
+test_monster_ignores_player_above_depth_10 (test_gather_p2.GatherP2MonstersAndFaint) ... ok
+test_monster_patrol_chase_hit_recoil_and_invuln (test_gather_p2.GatherP2MonstersAndFaint) ... ok
+test_dive_and_surface_events (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_faint_drops_hold_lifo_and_ends_with_empty_inventory (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_oxygen_empty_and_choke_at_t_plus_59 (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_surface_on_choke_tick_prevents_choke_and_refills (test_gather_rules.GatherSlice1OxygenAndFaint) ... ok
+test_catch_cooldown_usable_at_exact_t_plus_L (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_catch_hold_full_keeps_fish_and_no_cooldown (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_catch_ignored_at_surface (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_catch_underwater_tiebreak_and_cooldown (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_dock_priority_over_gather (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_gather_hold_full_keeps_node_ready (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_gather_nearest_tiebreak_by_id_and_regrow (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_last_tick_gather_included_in_time_end_inventory (test_gather_rules.GatherSlice2HarvestAndCatch) ... ok
+test_state_input_and_clean_stop (test_live.LiveServerTest) ... ok
+test_bad_frames_raise (test_python_starter_units.Units) ... ok
+test_catch_is_a_v10_button_and_attack_is_not (test_python_starter_units.Units) ... ok
+test_id_allocator_continues_after_max (test_python_starter_units.Units) ... ok
+test_id_sorting (test_python_starter_units.Units) ... ok
+test_input_edges_and_inherit (test_python_starter_units.Units) ... ok
+test_live_inputs_keep_fast_tap_edge (test_python_starter_units.Units) ... ok
+test_session_steps_gather_and_dock (test_python_starter_units.Units) ... ok
+test_day_cli_is_deterministic_through_shop_and_finishes_one_day (test_qa_p2.Phase2QA) ... ok
+test_day_cli_rejects_invalid_day_counts_before_writing (test_qa_p2.Phase2QA) ... ok
+test_quan_accepts_new_ingredient_and_reserves_recipe (test_qa_p2.Phase2QA) ... ok
+test_duplicate_customer_ids_and_table_assignments_are_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_invalid_stock_item_or_count_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_malformed_player_velocity_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_player_position_outside_contract_bounds_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_time_left_must_be_integer_inside_shift (test_quan_scenario.QuanScenarioTests) ... ok
+test_unknown_scenario_field_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_valid_quan_fixture_accepts_stock_player_and_customer (test_quan_scenario.QuanScenarioTests) ... ok
+test_default_shift_timer_uses_contract_duration (test_quan_scenario.QuanSimulationTests) ... ok
+test_player_is_clamped_at_room_edge_and_velocity_stops (test_quan_scenario.QuanSimulationTests) ... ok
+test_shift_end_emits_time_event_once_at_last_tick (test_quan_scenario.QuanSimulationTests) ... ok
+test_walk_reaches_contract_speed_and_respects_bounds (test_quan_scenario.QuanSimulationTests) ... ok
+test_con_01_ticks_zero_and_end_line (test_smoke_p1.Contract) ... ok
+test_con_02_deterministic_bytes (test_smoke_p1.Contract) ... ok
+test_con_03_bad_input_exit_2 (test_smoke_p1.Contract) ... ok
+test_con_03_old_and_future_modes_rejected (test_smoke_p1.Contract) ... ok
+test_gather_snapshot_has_gather_fields (test_smoke_p1.Contract) ... ok
+test_scenario_out_of_domain_exit_2 (test_smoke_p1.Contract) ... ok
+test_inv_01_gather_writes_inventory_quan_reads_it (test_smoke_p1.Integration)
+Ví dụ smoke test trong PRD-0 mục G: cập bến ở tick 0, quán đọc kho đúng nội dung. ... ok
+test_inv_01_not_written_when_tick_limit_first (test_smoke_p1.Integration) ... ok
+test_inv_bad_schema_exit_2 (test_smoke_p1.Integration) ... ok
+test_inventory_and_scenario_stock_conflict (test_smoke_p1.Integration) ... ok
+test_inventory_flags_mode_mismatch_exit_2 (test_smoke_p1.Integration) ... ok
+test_move_01_swim_speed_after_ramp (test_smoke_p1.Movement)
+Bỏ 6 tick tăng tốc rồi đo 60 tick: quãng ≈ swim_speed × 1 s (±0.1). Ngang, xuống, chéo (không nhanh hơn). ... ok
+test_move_02_heading_positive_is_down (test_smoke_p1.Movement) ... ok
+test_move_03_edge_clamp (test_smoke_p1.Movement)
+Chặn từng mép của vùng nước, kể cả d không âm (không bay lên khỏi mặt nước) và đáy d = 30. ... ok
+test_move_mep_vel_ve_0 (test_smoke_p1.Movement) ... ok
+test_move_ramp_doi_huong_trong_tran (test_smoke_p1.Movement)
+Đảo từ +speed sang -speed: vận tốc chạm mục tiêu sau tối đa ramp_max_ticks tick kể từ lúc đổi input. ... ok
+test_time_ends_gather_and_keeps_hold (test_smoke_p1.Movement) ... ok
+test_khoi_sai_mode_exit_2 (test_smoke_p1.ScenarioModes) ... ok
+test_quan_fixture_khong_hop_le_exit_2 (test_smoke_p1.ScenarioModes) ... ok
+test_quan_player_vel_hop_le (test_smoke_p1.ScenarioModes) ... ok
+test_good (test_team_check.TeamCheck) ... ok
+test_repo_team_md_is_valid (test_team_check.TeamCheck) ... ok
+test_template_is_rejected (test_team_check.TeamCheck) ... ok
+test_too_few_members (test_team_check.TeamCheck) ... ok
+test_wrong_size_duplicate_and_outsider (test_team_check.TeamCheck) ... ok
+
+----------------------------------------------------------------------
+Ran 71 tests in 3.433s
+
+OK
