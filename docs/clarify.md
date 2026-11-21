@@ -2,3 +2,8 @@
 
 | # | Ngày giờ | Câu hỏi | Trả lời / giả định | Ai quyết |
 |---|---|---|---|---|
+| 1 | 2026-11-21 09:35 | Quy tắc ưu tiên tương tác tại quán khi người chơi đứng gần cả bếp và bàn? | Bán kính interact_radius <= 1.5; chọn duy nhất 1 đối tượng theo thứ tự: khoảng cách gần nhất -> Bếp ưu tiên trước Bàn -> ID theo thứ tự alphabet (B1 trước B2, T1 trước T2). | PO (TV 2) |
+| 2 | 2026-11-21 09:38 | Nguyên tắc chọn món của khách đến và giữ chỗ nguyên liệu (reserved)? | Khách chỉ chọn món có đủ nguyên liệu khả dụng (stock - reserved >= recipe). Khi khách ngồi vào bàn, nguyên liệu được giữ chỗ ngay trong reserved. Nếu còn bàn mà không đủ nguyên liệu nấu món nào -> sự kiện no_dish, -0.5 uy tín, khách rời đi. | PO (TV 2) |
+| 3 | 2026-11-21 09:40 | Điều kiện nhận tiền boa (tip) và thay đổi uy tín khi phục vụ? | Khách được phục vụ khi thời gian kiên nhẫn còn >= 50% (tip_min_patience_ratio) sẽ boa thêm 20% (tip_rate) và cộng +0.2 uy tín lúc thanh toán (paid). Nếu hết kiên nhẫn trước khi phục vụ -> customer_left, -0.5 uy tín (left_reputation_delta), giải phóng reserved. | PO (TV 2) |
+| 4 | 2026-11-21 09:45 | Quy tắc nấu món tại bếp (cook_started)? | Bếp trống (idle) khi nhấn interact sẽ tìm khách đang đợi món chưa được nấu (chưa có trên bếp/tay) theo thứ tự ID khách để bắt đầu nấu, trừ nguyên liệu thật trong stock và reserved. Bếp nấu xong -> ready; nhấn interact khi tay rỗng -> nhặt lên tay (dish_picked). | PO (TV 2) |
+

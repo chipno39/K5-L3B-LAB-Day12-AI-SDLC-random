@@ -5,7 +5,7 @@
 | Thành viên | GitHub handle | Module chính | Vai quy trình | Người dự phòng cho |
 |---|---|---|---|---|
 | Nguyễn Xuân Đạt (2A202603958) | `chipno39` | `sim/gather` | Integrator | Quách Ngọc Huy (`sim/quan`) |
-| Quách Ngọc Huy (2A202603956) | `…` | `sim/quan` | PO | Nguyễn Xuân Đạt (`sim/gather`) |
+| Quách Ngọc Huy (2A202603956) | `Zellsed` | `sim/quan` | PO | Nguyễn Xuân Đạt (`sim/gather`) |
 | Vũ Lương Duy (2A202603945) | `…` | `client/ui` | Scrum/Release | Lương Đức Anh (`qa`) |
 | Lương Đức Anh (2A202603931) | `…` | `qa` | QA lead | Vũ Lương Duy (`client/ui`) |
 
