@@ -12,9 +12,9 @@ import inspect
 import math
 
 from .errors import BadInput
-from .ids import IdAllocator
+from .ids import IdAllocator, sort_by_id
 from .inputs import InputPlayer
-from .inventory import write_inventory
+from .inventory import fresh_num, write_inventory
 from .jsonl import JsonlWriter
 from .rng import Streams
 from .sim.gather import GatherSim
@@ -76,8 +76,9 @@ class Session:
             self.active_upgrades = dict(self.upgrades)
             self.plans = _build_day_plans(tuning, day_sc)
             self.streams = Streams(seed)
+            self.item_ids = IdAllocator()
             self.phase = "gather"
-            self.shop_stock = {}
+            self.shop_stock = []
             self.shop_time_left = 0
             self._done = False
             self._reason = None
@@ -112,7 +113,7 @@ class Session:
         gather_sc = self.scenario.get("gather", {})
         self.sim = GatherSim(
             self.tuning, gather_sc, self.streams, IdAllocator(),
-            day_num=self.day, active_upgrades=self.active_upgrades,
+            day_num=self.day, active_upgrades=self.active_upgrades, item_ids=self.item_ids,
         )
         self.sim.money = self.money
         self.sim.earned = self.earned
@@ -144,7 +145,13 @@ class Session:
     def _start_shop(self, leftover_stock, emit_to):
         self.phase = "shop"
         self.phase_tick = 0
-        self.shop_stock = {k: int(v) for k, v in sorted(leftover_stock.items()) if v > 0}
+        if isinstance(leftover_stock, list):
+            self.shop_stock = [
+                {"id": it["id"], "kind": it["kind"], "fresh": fresh_num(it["fresh"])}
+                for it in sort_by_id(leftover_stock)
+            ]
+        else:
+            self.shop_stock = {k: int(v) for k, v in sorted(leftover_stock.items()) if v > 0}
         self.shop_time_left = int(self.tuning.get("shop", {}).get("max_ticks", 600))
         self.sim = None
         emit_to.append(self._ev("phase_start", {}, phase="shop"))
@@ -208,7 +215,7 @@ class Session:
             s["upgrades"] = dict(self.upgrades)
             s["active_upgrades"] = dict(self.active_upgrades)
             if self.phase == "shop":
-                s["stock"] = dict(self.shop_stock)
+                s["stock"] = [dict(it) for it in self.shop_stock] if isinstance(self.shop_stock, list) else dict(self.shop_stock)
             else:
                 s.update(self.sim.snapshot())
         else:

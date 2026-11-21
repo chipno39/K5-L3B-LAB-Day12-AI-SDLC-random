@@ -1,80 +1,48 @@
-# Hợp đồng tích hợp — Nhóm `random` (Test Contract v1.1)
+# Hợp đồng tích hợp — Nhóm `random` (Test Contract v1.2)
 
-> Cập nhật lên **Contract v1.1 (Phase 2)** giữa 4 module (`sim/gather`, `sim/quan`, `client/ui`, `qa`). Khi cần thay đổi ở phase sau, báo cả nhóm và ghi lại lý do.
+> Cập nhật lên **Contract v1.2 (Phase 3 — Mùa Nước Nổi)** giữa 4 module (`sim/gather`, `sim/quan`, `client/ui`, `qa`).
 
 ---
 
-## 1. Schema file kho (`gather` → `quan`)
+## 1. Phân tích tác động & Thứ tự tích hợp đổi schema (v1.1 → v1.2)
 
-Khớp PRD-0 mục G & TICKET-02, dùng mẫu hợp lệ tại [`inventory.sample.json`](inventory.sample.json):
+**Quyết định đổi schema:** Chuyển toàn bộ kho (`inventory`, `gather.hold`, `quan.stock`, `shop.stock`) từ map đếm sang mảng cá thể `{id, kind, fresh}` với `IdAllocator` giữ xuyên pha/Ngày (`I1, I2, ...`) và dùng `fractions.Fraction` (độ chính xác tuyệt đối ở ngưỡng `30` và phép `floor`).
+
+**Thứ tự tích hợp để `main` luôn chạy được:**
+1. **Bước 1 (Adapter + Gather + Runner — nhánh `feat/p3-freshness-v12`):** Cập nhật `game.contract.json`, `inventory.py`, `scenario.py`, `sim/gather.py`, `runner.py`, `docs/contracts/`, `CHANGELOG.md`.
+2. **Bước 2 (Song song trên nhánh từ Bước 1):** `sim/quan` chuyển sang kho cá thể + giữ chỗ theo ID + chốt `base_price`; `client/ui` đọc mảng cá thể & hiển thị độ tươi/hàng ươn; `qa` cập nhật fixture test cũ + bổ sung test ngưỡng 30, giữ lại khi ươn, giá theo tươi & từ chối kho đếm mã `2`.
+3. **Bước 3 (Bật v1.2 trên `main`):** Gộp cả 2 đầu bàn giao (`gather` + `quan` + `ui` + `qa`), chạy smoke hai tiến trình & `day`, chạy toàn bộ regression rồi đẩy tag `phase-3`.
+
+| Module | File cần đổi | Test bị ảnh hưởng | Người phụ trách |
+|---|---|---|---|
+| Adapter & Day | `game.contract.json`, `chonoi/inventory.py`, `chonoi/scenario.py`, `chonoi/runner.py` | `test_smoke_p1.py`, `test_day_pause_shop.py` | Đạt (`chipno39`) |
+| Lặn & Hái | `chonoi/sim/gather.py` | `test_gather_rules.py`, `test_gather_p2.py`, thêm `test_gather_p3.py` | Đạt (`chipno39`) |
+| Mở Quán | `chonoi/sim/quan.py`, `docs/clarify.md` | `test_quan_p2.py`, thêm `test_quan_p3.py` | Huy (`Zellsed`) |
+| HUD / UI | `chonoi/web/index.html`, `chonoi/live.py`, `docs/plan/phase-3.md` | `test_live_day.py`, ảnh proof UI P3 | Duy (`vuduy21`) |
+| QA & Proof | `tests/test_smoke_p1.py`, `tests/test_quan_scenario.py`, `tests/test_qa_p2.py`, `tests/test_qa_p3.py`, `docs/verification/phase-3.md` | Regression P1–P2 + test v1.2 mới | Đức Anh (`ldlda`) |
+
+---
+
+## 2. Schema file kho v1.2 (`gather` → `quan`)
+
+Khớp TICKET-03 mục 1, dùng mẫu hợp lệ tại [`inventory.sample.json`](inventory.sample.json):
 
 ```json
-{"items":{"bong_sung":2,"ca_loc":1}}
+{"items":[{"id":"I1","kind":"ca_linh","fresh":100},{"id":"I2","kind":"ca_loc","fresh":97.5}]}
 ```
 
-* Chỉ có 1 khóa gốc `"items"`: map `kind -> int >= 0`.
-* 6 `kind` hợp lệ ở v1.1: `ca_loc`, `ca_linh`, `ca_keo`, `bong_dien_dien`, `bong_sung`, `keo_neo`.
-* Bên ghi bỏ các khóa có giá trị `0`, sắp khóa theo thứ tự từ điển, ghi nguyên tử (file tạm cùng thư mục → `os.replace`). Kho rỗng là `{"items":{}}`.
-* Ghi **đúng một lần** khi `gather` kết thúc (`gather_end`: `docked` / `time` / `fainted` — ngất thì ghi rỗng). Chạm `--ticks` trước khi kết thúc buổi sáng thì **không** tạo/ghi đè file kho.
-* Bên đọc (`quan`) từ chối sai schema, `kind` lạ, số âm hoặc khai đồng thời `--inventory` và `scenario.quan.stock` (mã thoát `2`).
+* Chỉ có 1 khóa gốc `"items"`: mảng cá thể `{"id": str, "kind": str, "fresh": number ∈ [0, 100]}`. Kho rỗng là `{"items":[]}`.
+* 6 `kind` hợp lệ: `ca_loc`, `ca_linh`, `ca_keo`, `bong_dien_dien`, `bong_sung`, `keo_neo`.
+* Cấp `id` dạng `I1, I2, ...` tăng dần xuyên pha và xuyên Ngày (không tái sử dụng).
+* Bên ghi xuất mảng sắp theo `id`, đủ độ chính xác float để giữ nhánh ở ngưỡng `30`, ghi nguyên tử (file tạm cùng thư mục → `os.replace`).
+* Bên đọc (`contract_version: "1.2"`) **từ chối file kho đếm cũ**, sai schema, `kind` lạ, `id` trùng hoặc `fresh` ngoài `[0, 100]` (mã thoát `2`).
 
 ---
 
-## 2. Giao diện giữa `sim/*` và `client/ui`
+## 3. Quy tắc Độ tươi & Sự kiện mới (v1.2)
 
-`client/ui` (`chonoi/live.py` + `chonoi/web/index.html`) chạy qua `chonoi.runner.Session` (cùng lớp sim với headless), **chỉ đọc snapshot và gửi input**, không tự tính luật:
-
-* **Lệnh UI gửi vào (`LiveInputs.set`):**
-  * `move`: `[x, d]` cho `gather` (`d > 0` là lặn xuống), `[x, z]` cho `quan` (`z > 0` là hướng bắc), mỗi thành phần trong `[-1, 1]`.
-  * `interact`: boolean (cạnh lên `false -> true`; phím `E`).
-  * `catch`: boolean (cạnh lên `false -> true`; phím `Space`, dùng ở `gather`).
-* **Trạng thái UI đọc từ `Session.snapshot()`:**
-  * **Chung:** `tick`, `sim_tick`, `mode`, `phase`, `phase_tick`, `state` (`playing`/`finished`), `time_left_ticks`, `money`, `earned`, `reputation`, `score`.
-  * **`gather`:** `player` (`pos`, `vel`, `heading_deg`, `oxygen_ticks`, `oxygen_max_ticks`, `hp`, `hp_max`, `zero_oxy_ticks`, `catch_cd_ticks`, `at_surface`), `hold`, `hold_count`, `hold_capacity`, `nodes[]` (`id`, `pos`, `kind`, `ready`, `regrow_ticks`), `fish[]` (`id`, `pos`, `kind`, `heading_deg`).
-  * **`quan`:** `player` (`pos`), `stock`, `hand`, `stoves[]` (`id`, `pos`, `state`, `dish`, `cook_ticks_left`, `ready_ticks`), `tables[]` (`id`, `pos`, `customer_id`), `customers[]` (`id`, `table_id`, `dish_id`, `order_tick`, `state`, `patience_ticks_left`, `eat_ticks_left`, `order_status`, `reserved`, `base_price`, `tip`).
-
----
-
-## 3. Danh sách sự kiện (PRD-0 mục E)
-
-### Buổi sáng (`gather` — phát bởi `chonoi/sim/gather.py`)
-
-| Sự kiện | `data` | Ghi chú |
-|---|---|---|
-| `node_regrown` | `{"node_id"}` | Khi `regrow_ticks` từ 1 về 0 (theo thứ tự `id`) |
-| `dive` | `{"pos"}` | Đổi từ mặt nước (`d <= surface_depth`) sang dưới nước |
-| `surface` | `{"pos"}` | Đổi từ dưới nước sang mặt nước |
-| `oxygen_empty` | `{"oxygen_ticks": 0}` | Khi `oxygen_ticks` từ dương xuống 0 |
-| `choke` | `{"hp"}` | Khi `zero_oxy_ticks` đạt `choke_interval_ticks`, `-1` HP |
-| `faint` | `{"cause": "choke", "lost": [...], "hp": 0}` | `lost` theo thứ tự bỏ LIFO (nhặt sau bỏ trước) |
-| `gather` | `{"node_id", "kind", "amount"}` | Hái nút mặt nước thành công |
-| `fish_caught` | `{"fish_id", "kind", "yield"}` | Bắt cá dưới nước thành công (đủ sức chứa cho cả `yield`) |
-| `hold_full` | `{"action", "node_id" \| "fish_id", "required", "free"}` | `action` là `"gather"` hoặc `"catch"` |
-| `fish_spawned` | `{"id", "kind", "pos"}` | Sinh cá theo lịch `phase_tick = 360*k` (v1.1) |
-| `monster_hit` | `{"monster_id", "hp", "lost", "pos"}` | Cá Sấu chạm khi `d >= 10`, mất `floor(hold/2)` LIFO, `invuln = 90` (v1.1) |
-| `gather_end` | `{"reason", "inventory": {"items": ...}}` | `reason`: `"docked"` / `"time"` / `"fainted"` |
-
-### Vòng ngày (`day`), Pause & Shop (v1.1)
-
-| Sự kiện | `data` | Ghi chú |
-|---|---|---|
-| `day_start`, `phase_start` | `{}` | Mở Ngày / chuyển pha (`gather` → `quan` → `shop`) |
-| `day_plan` | `{"dishes", "ingredients"}` | Công bố kế hoạch D1–D5 ở đầu Ngày |
-| `paused`, `resumed` | `{}` | Tạm dừng/tiếp tục (`pause` cạnh lên) |
-| `bought` | `{"upgrade", "level", "price", "money"}` | Mua nâng cấp `oxygen` / `hp` trong Shop |
-| `buy_failed` | `{"action", "reason"}` | `reason`: `funds` / `max_level` / `out_of_stock` / `unknown` |
-| `shop_end` | `{"reason"}` | `reason`: `"done"` / `"time"` |
-
-### Buổi tối (`quan` — phát bởi `chonoi/sim/quan.py`)
-
-| Sự kiện | `data` | Ghi chú |
-|---|---|---|
-| `customer_arrived` | `{"order_id", "table_id", "dish_id"}` | Khách mới vào bàn trống `id` nhỏ nhất |
-| `no_dish` | `{}` | Có bàn trống nhưng không đủ nguyên liệu khả dụng cho món nào |
-| `cook_started` | `{"stove_id", "order_id", "dish_id", "items", "base_price"}` | `items` sắp theo `kind` |
-| `dish_ready` | `{"stove_id", "order_id", "dish_id"}` | Bếp nấu xong, chuyển `ready` (`ready_ticks = 0`) |
-| `dish_picked` | `{"stove_id", "order_id", "dish_id"}` | Nhấc món lên tay trống, bếp về `idle` |
-| `served` | `{"order_id", "table_id", "dish_id", "patience_ticks_left", "base_price", "tip"}` | Phục vụ đúng `order_id` |
-| `paid` | `{"order_id", "table_id", "base_price", "tip", "amount", "reason"}` | `reason`: `"finished_eating"` / `"closing"` |
-| `customer_left` | `{"order_id", "table_id", "reason", "reputation"}` | `reason`: `"patience"` / `"closing"` |
-| `quan_end` | `{"reason": "time", "money", "earned", "shift_earned", "reputation"}` | Kết thúc ca tối |
+* `fresh = 100` lúc bắt/hái, hao từ bước sau: giỏ `-0.5/s` (`-1/120` mỗi tick), kho quán `-0.25/s` (`-1/240` mỗi tick, kể cả hàng giữ chỗ). Pause dừng hao; món chín & Shop không hao.
+* Ươn khi `fresh < 30` (so trước làm tròn): phát `spoiled` (`{"item_id", "kind", "location": "hold"|"stock"}`) đúng 1 lần theo thứ tự `id`.
+* `customers[].reserved`: mảng ID cá thể `["I1", ...]`. Giữ cá thể chưa ươn tươi nhất, hòa theo `id`. Nếu có cá thể giữ vừa ươn → nhả hết phần giữ của đơn, thử giữ lại đúng 1 lần (theo `order_tick` rồi `table_id`), thiếu → `unfulfillable`.
+* `cook_started.data.items`: mảng cá thể sắp theo `(kind, id)`. `base_price = floor(giá niêm yết × trung bình fresh / 100)`.
+* `monster_hit.data.lost` và `faint.data.lost`: mảng cá thể theo thứ tự bỏ LIFO.

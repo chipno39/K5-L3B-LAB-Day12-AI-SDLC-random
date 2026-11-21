@@ -78,11 +78,13 @@ class GatherSlice1OxygenAndFaint(unittest.TestCase):
         names = [e["name"] for e in events]
         self.assertEqual(names, ["choke", "faint", "gather_end"])
         faint = ev_by_name(events, "faint")[0]["data"]
-        self.assertEqual(faint, {"cause": "choke", "lost": ["ca_linh", "bong_sung", "ca_loc"], "hp": 0})
+        self.assertEqual(faint["cause"], "choke")
+        self.assertEqual(faint["hp"], 0)
+        self.assertEqual([it["kind"] for it in faint["lost"]], ["ca_linh", "bong_sung", "ca_loc"])
         end = ev_by_name(events, "gather_end")[0]["data"]
-        self.assertEqual(end, {"reason": "fainted", "inventory": {"items": {}}})
+        self.assertEqual(end, {"reason": "fainted", "inventory": {"items": []}})
         self.assertEqual(snaps[1]["hold"], [])
-        self.assertEqual(sess.sim.inventory_items(), {})
+        self.assertEqual(sess.sim.inventory_items(), [])
 
 
 class GatherSlice2HarvestAndCatch(unittest.TestCase):
@@ -102,7 +104,7 @@ class GatherSlice2HarvestAndCatch(unittest.TestCase):
         self.assertEqual(len(gathers), 1)
         self.assertEqual(gathers[0]["tick"], 1)
         self.assertEqual(gathers[0]["data"], {"node_id": "N2", "kind": "bong_dien_dien", "amount": 1})
-        self.assertEqual(snaps[1]["hold"], ["bong_dien_dien"])
+        self.assertEqual([it["kind"] for it in snaps[1]["hold"]], ["bong_dien_dien"])
         regrows = ev_by_name(events, "node_regrown")
         self.assertEqual(len(regrows), 1)
         self.assertEqual(regrows[0]["tick"], 1201)
@@ -161,7 +163,7 @@ class GatherSlice2HarvestAndCatch(unittest.TestCase):
         self.assertEqual(caught[0]["data"], {"fish_id": "F2", "kind": "ca_linh", "yield": 3})
         self.assertEqual(caught[1]["tick"], 32)
         self.assertEqual(caught[1]["data"], {"fish_id": "F10", "kind": "ca_loc", "yield": 1})
-        self.assertEqual(snaps[32]["hold"], ["ca_linh", "ca_linh", "ca_linh", "ca_loc"])
+        self.assertEqual([it["kind"] for it in snaps[32]["hold"]], ["ca_linh", "ca_linh", "ca_linh", "ca_loc"])
 
     def test_catch_cooldown_usable_at_exact_t_plus_L(self):
         sc = {
@@ -225,7 +227,7 @@ class GatherSlice2HarvestAndCatch(unittest.TestCase):
         self.assertTrue(sess.done)
         self.assertEqual([e["name"] for e in events], ["gather", "gather_end"])
         end = ev_by_name(events, "gather_end")[0]["data"]
-        self.assertEqual(end, {"reason": "time", "inventory": {"items": {"bong_sung": 1}}})
+        self.assertEqual(end, {"reason": "time", "inventory": {"items": [{"id": "I1", "kind": "bong_sung", "fresh": 100}]}})
 
 
 if __name__ == "__main__":
