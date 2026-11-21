@@ -8,8 +8,10 @@ Mỗi tick tối đa một snapshot.
 cả hai chạy CÙNG một lớp sim, không nhân đôi logic.
 """
 
+import inspect
 import math
 
+from .errors import BadInput
 from .ids import IdAllocator
 from .inputs import InputPlayer
 from .inventory import write_inventory
@@ -40,6 +42,8 @@ def _build_day_plans(tuning, day_sc):
         dishes = dict(item["dishes"])
         ing = {}
         for did, cnt in dishes.items():
+            if did not in menu:
+                raise BadInput(f"day_plan: món lạ {did!r}")
             for k, q in menu[did]["recipe"].items():
                 ing[k] = ing.get(k, 0) + q * cnt
         plans[dnum] = {"dishes": dishes, "ingredients": ing}
@@ -124,10 +128,14 @@ class Session:
         self.phase_tick = 0
         quan_sc = self.scenario.get("quan", {})
         plan_dishes = set(self._current_plan()["dishes"].keys())
-        filtered_tuning = dict(self.tuning)
-        if plan_dishes:
-            filtered_tuning["menu"] = {k: v for k, v in self.tuning["menu"].items() if k in plan_dishes}
-        self.sim = QuanSim(filtered_tuning, quan_sc, self.streams, IdAllocator(), inventory=inventory_items)
+        if "dishes" in inspect.signature(QuanSim.__init__).parameters:
+            self.sim = QuanSim(self.tuning, quan_sc, self.streams, IdAllocator(),
+                               inventory=inventory_items, dishes=plan_dishes)
+        else:
+            filtered_tuning = dict(self.tuning)
+            if plan_dishes:
+                filtered_tuning["menu"] = {k: v for k, v in self.tuning["menu"].items() if k in plan_dishes}
+            self.sim = QuanSim(filtered_tuning, quan_sc, self.streams, IdAllocator(), inventory=inventory_items)
         self.sim.money = self.money
         self.sim.earned = self.earned
         self.sim.reputation = self.reputation

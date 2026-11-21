@@ -29,8 +29,9 @@
 
 ## Skills / hooks của nhóm
 - `phase-release-check` (`.agents/skills/phase-release-check/SKILL.md`): Dùng trước khi gắn tag `phase-1`..`phase-4` để kiểm tra `check_team.py`, chạy test hộp đen + unit test, kiểm tra tích hợp kho `gather -> quan`, rà soát tài liệu DoD và đẩy tag đúng hạn.
-- *(Phase 2+: bổ sung skill thứ 2 do QA lead / nhóm xây dựng cho regression & determinism check.)*
+- `qa-regression` (`.agents/skills/qa-regression/SKILL.md`): Dùng khi đổi contract, mô phỏng hoặc vòng ngày để kiểm hồi quy, so byte JSONL và ghi bằng chứng.
 
 ## Nhật ký tiến hóa AGENTS.md
 - **Phase 1:** Chốt lệnh chạy trên cả Linux/macOS và Windows PowerShell, giữ nguyên `python3` trong `game.contract.json` cho CI Linux, bổ sung skill `phase-release-check`.
 - **Phase 2:** Nâng cấp Test Contract v1.1 (`--mode day --days 1..5`, `Shop`, `Pause`, cá bơi/sinh, Cá Sấu M1/M2); tách test regression `test_gather_p2` & `test_day_pause_shop`; nhắc giữ bản sao list trong `snapshot()` tránh đột biến tham chiếu giữa các tick.
+- **Phase 2 QA:** Bổ sung skill `qa-regression` cho kiểm chứng v1.1 và hồi quy Phase 1.
