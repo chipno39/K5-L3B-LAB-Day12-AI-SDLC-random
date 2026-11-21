@@ -23,3 +23,17 @@ Giới hạn trung thực:
 - Ảnh là trạng thái tĩnh từ snapshot đã chỉnh, chưa phải một lượt chơi thật có cả ba cảnh báo kích hoạt tự nhiên; chưa gõ phím `H` trực tiếp trong trình duyệt (đã kiểm `?hc=1` và logic bật/tắt qua harness).
 - "Tương phản cao" ở đây là lớp hiển thị tự làm, chưa đo bằng công cụ chuẩn (ví dụ tỉ lệ WCAG) cho từng màu.
 - Chế độ không gồm phụ đề/âm thanh (game chưa có âm thanh).
+
+## Đồ họa cảnh quán (làm lại)
+Người, bàn, bếp và món ăn được vẽ lại (chỉ là lớp hiển thị, vẽ từ snapshot; không đổi luật/headless):
+- **Người** (Út Sen, khách): có đầu, tóc, mặt (mắt, miệng, má), áo bà ba, tay, chân, bóng. Út Sen buộc khăn rằn, bím tóc, đi/bưng món (chân đổi nhịp khi đi). Khách có dáng riêng suy ra từ id (áo, tóc, da, nón lá, khăn rằn); khi ăn thì há miệng, khi sắp giận thì cau mày đỏ má.
+- **Bàn** gỗ tròn có vân, ống đũa, chén nước mắm, bảng số bàn. **Bếp** lò đất nung gạch, miệng lò có lửa bập bùng khi nấu, nồi, củi; món chín hiện đĩa món trên mặt bếp kèm dấu ✔.
+- **Món ăn**: mỗi món một hình riêng (6 món) ở bong bóng gọi món, trên tay Út Sen, trên bàn khi khách ăn, trên bếp khi chín, và trong khung đơn / thực đơn.
+- Vẽ theo độ sâu (xa → gần) nên Út Sen đi phía sau hoặc phía trước bàn đúng chỗ.
+
+| Ảnh | Cho thấy |
+|---|---|
+| `quan-do-hoa-moi.png` / `...-tuong-phan-cao.png` | cảnh quán đông: bếp đang nấu + bếp chín, khách chờ / ăn / sắp giận, Út Sen bưng món |
+| `quan-6-mon-an-co-hinh.png` | cả 6 món cùng lúc (bàn, bếp chín, bong bóng, thực đơn), phóng to |
+
+Giới hạn trung thực: ảnh dựng từ snapshot đã chỉnh (đặt sẵn khách, bếp, món), chưa phải một lượt chơi thật liên tục; hình vẽ bằng mã nên là phong cách đơn giản, chưa phải đồ họa chuyên nghiệp.
