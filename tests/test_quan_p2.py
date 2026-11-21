@@ -107,5 +107,39 @@ class QuanDayPlanMenuTests(unittest.TestCase):
         self.assertEqual([n for n, _ in events], ["no_dish"])
 
 
+class QuanClosingTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tuning = load_contract()["tuning"]
+
+    def test_closing_pays_eating_then_waiting_leave_without_reputation_loss(self):
+        scenario = {
+            "random_customers": False,
+            "time_left_ticks": 1,
+            "reputation": 3.0,
+            "customers": [
+                {"id": "C1", "table_id": "T1", "dish_id": "goi_bong_sung"},
+                {"id": "C2", "table_id": "T2", "dish_id": "ca_keo_nuong", "state": "eating",
+                 "order_status": "eating", "base_price": 70, "tip": 14, "eat_ticks_left": 300},
+            ],
+        }
+        sim = make_sim(self.tuning, scenario, inventory=RICH_STOCK)
+        events = run_idle(sim, 1)
+
+        self.assertEqual([n for n, _ in events], ["paid", "customer_left", "quan_end"])
+        paid, left, end = (d for _, d in events)
+        self.assertEqual((paid["order_id"], paid["reason"], paid["amount"]), ("C2", "closing", 84))
+        self.assertEqual((left["order_id"], left["reason"]), ("C1", "closing"))
+        self.assertEqual(left["reputation"], 3.0)
+        self.assertEqual((end["money"], end["shift_earned"], end["reputation"]), (84, 84, 3.0))
+        # quán đóng: không còn khách, stock (kể cả phần từng giữ chỗ) còn nguyên cho Shop
+        self.assertEqual(sim.snapshot()["customers"], [])
+        self.assertEqual(sim.stock["bong_sung"], RICH_STOCK["bong_sung"])
+
+    def test_empty_shop_closes_with_only_quan_end(self):
+        sim = make_sim(self.tuning, {"time_left_ticks": 1, "random_customers": False})
+        self.assertEqual([n for n, _ in run_idle(sim, 1)], ["quan_end"])
+
+
 if __name__ == "__main__":
     unittest.main()

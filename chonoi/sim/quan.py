@@ -268,10 +268,11 @@ class QuanSim:
             if self.sim_tick >= first_tick and (self.sim_tick - first_tick) % interval == 0:
                 self._spawn_customer(events)
 
-        # 6. Hết giờ ca làm
+        # 6. Hết giờ ca làm: đóng quán (clarify #7) rồi mới phát quan_end
         if self.time_left_ticks <= 0:
             self.done = True
             self.reason = "time"
+            self._close_shift(events)
             events.append((
                 "quan_end",
                 {
@@ -284,6 +285,53 @@ class QuanSim:
             ))
 
         return events
+
+    def _close_shift(self, events):
+        """Đóng quán: khách đang ăn trả tiền ngay (`paid` reason `closing`), sau đó khách
+        còn chờ rời đi (`customer_left` reason `closing`, KHÔNG trừ uy tín, nhả reserved).
+        Mỗi nhóm xử lý theo thứ tự id khách."""
+        ordered = sort_by_id(self.customers)
+        for c in ordered:
+            if c["state"] != "eating":
+                continue
+            dish = c.get("dish_id")
+            price = c.get("base_price", self.menu.get(dish, {}).get("price", 0) if dish else 0)
+            tip = c.get("tip", 0)
+            total = price + tip
+            self.money += total
+            self.earned += total
+            self.shift_earned += total
+            events.append((
+                "paid",
+                {
+                    "order_id": c["id"],
+                    "customer_id": c["id"],
+                    "table_id": c["table_id"],
+                    "dish": dish,
+                    "dish_id": dish,
+                    "base_price": price,
+                    "price": price,
+                    "tip": tip,
+                    "amount": total,
+                    "money": self.money,
+                    "reason": "closing",
+                },
+            ))
+        for c in ordered:
+            if c["state"] != "waiting":
+                continue
+            c["reserved"] = {}
+            events.append((
+                "customer_left",
+                {
+                    "order_id": c["id"],
+                    "customer_id": c["id"],
+                    "table_id": c["table_id"],
+                    "reason": "closing",
+                    "reputation": self.reputation,
+                },
+            ))
+        self.customers = []
 
     def _handle_interact(self, events):
         radius = self.t["interact_radius"]
