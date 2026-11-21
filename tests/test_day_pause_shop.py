@@ -1,5 +1,7 @@
 """Unit & integration tests cho Phase 2: --mode day, Shop (oxygen/hp), Pause/Resume (Contract v1.1)."""
 
+from helpers import item_units
+
 import unittest
 
 from chonoi.contract import load_contract
@@ -52,7 +54,7 @@ class DayAndShopTests(unittest.TestCase):
         # vào Shop mua oxygen cấp 1 (giá 200 -> còn 0) và đóng shop bằng shop_done -> sang Ngày 2 áp dụng oxy 45s (2700 tick)!
         sc = {
             "day": {"money": 200, "earned": 200},
-            "gather": {"hold": ["ca_loc", "bong_sung", "bong_sung"], "random_fish": False, "monsters": []},
+            "gather": {"hold": item_units("ca_loc", "bong_sung", "bong_sung"), "random_fish": False, "monsters": []},
             "quan": {"time_left_ticks": 1, "random_customers": False},
         }
         fr = [
@@ -67,7 +69,8 @@ class DayAndShopTests(unittest.TestCase):
         self.assertEqual(snaps[0]["day"], 1)
         self.assertEqual(snaps[0]["player"]["oxygen_max_ticks"], 1800)
         self.assertEqual(snaps[2]["phase"], "shop")
-        self.assertEqual(snaps[2]["stock"], {"bong_sung": 2, "ca_loc": 1})
+        self.assertEqual(snaps[2]["stock"],
+                         item_units("ca_loc", "bong_sung", "bong_sung", fresh=99.988))
         # Ngày 2 đã áp dụng nâng cấp oxygen cấp 1 (45s = 2700 tick) và money giảm còn 0, earned vẫn 200
         self.assertEqual(snaps[3]["day"], 2)
         self.assertEqual(snaps[3]["phase"], "gather")

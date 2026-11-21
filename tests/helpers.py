@@ -65,3 +65,9 @@ class Workdir:
 
     def path(self, name):
         return os.path.join(self._d.name, name)
+
+
+def item_units(*kinds, fresh=100):
+    """Build v1.2 individual inventory fixtures with stable IDs."""
+    return [{"id": f"I{i}", "kind": kind, "fresh": fresh}
+            for i, kind in enumerate(kinds, 1)]
