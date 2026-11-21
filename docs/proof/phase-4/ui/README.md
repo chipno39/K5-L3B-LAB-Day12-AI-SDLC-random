@@ -37,3 +37,18 @@ Người, bàn, bếp và món ăn được vẽ lại (chỉ là lớp hiển t
 | `quan-6-mon-an-co-hinh.png` | cả 6 món cùng lúc (bàn, bếp chín, bong bóng, thực đơn), phóng to |
 
 Giới hạn trung thực: ảnh dựng từ snapshot đã chỉnh (đặt sẵn khách, bếp, món), chưa phải một lượt chơi thật liên tục; hình vẽ bằng mã nên là phong cách đơn giản, chưa phải đồ họa chuyên nghiệp.
+
+## Đồ họa cảnh buổi sáng (làm lại)
+Chỉ là lớp hiển thị, vẽ từ snapshot; không đổi luật/headless:
+- **Út Sen**: dưới nước là người bơi nhìn nghiêng (kính lặn, khăn rằn buộc đầu, bím tóc bay, áo bà ba, tay bơi, chân đạp nước, giỏ lưới đeo hông), quay theo hướng bơi và lật khi quay trái để không bị lộn ngược; nhịp tay chân nhanh khi đang bơi, chậm khi đứng yên. Trên mặt nước thì nổi, chỉ thấy nửa người trên, có sóng gợn quanh người.
+- **Bờ và bến**: bờ xa mờ có nhà sàn mái lá, bụi dừa nước, mây trôi; bến gỗ có ván, cột, đèn lồng, dây neo và ghe mái lá đậu cạnh (nhấp nhô theo sóng).
+- **Dưới nước**: tia nắng xiên, đáy sông bùn có đá, rong đung đưa, phù sa lơ lửng.
+- **Cây trên mặt nước**: bông súng (lá có khuyết, hoa hồng nhiều lớp), bông điên điển (cụm hoa vàng buông trên cành), kèo nèo (bụi cỏ nước đầu vàng).
+- **Cá**: cá linh (bạc, thon, vạch bên, đuôi chẻ), cá kèo (đầu to, mắt lồi, vây ngực cam, thân đốm nâu) có hình riêng, cũng dùng trong ô giỏ.
+
+| Ảnh | Cho thấy |
+|---|---|
+| `sang-noi-tren-mat-nuoc-ben-ghe.png` | Út Sen nổi cạnh bông điên điển, bến + ghe + đèn lồng, bờ xa, bông, cá, Cá Sấu |
+| `sang-ut-sen-boi-duoi-nuoc.png` / `...-tuong-phan-cao.png` | Út Sen đang bơi chéo xuống dưới nước (thường và tương phản cao) |
+
+Giới hạn trung thực: ảnh dựng từ snapshot đã chỉnh (đặt sẵn vị trí, vận tốc, hướng), chưa phải một lượt chơi liên tục; Út Sen vẫn khá nhỏ trên cửa sổ hẹp vì cả dòng sông dài 100 m phải vừa một màn hình.
