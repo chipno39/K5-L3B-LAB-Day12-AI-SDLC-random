@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | Nguyễn Xuân Đạt (2A202603958) | `chipno39` | `sim/gather` | Integrator | Quách Ngọc Huy (`sim/quan`) |
 | Quách Ngọc Huy (2A202603956) | `Zellsed` | `sim/quan` | PO | Nguyễn Xuân Đạt (`sim/gather`) |
-| Vũ Lương Duy (2A202603945) | `…` | `client/ui` | Scrum/Release | Lương Đức Anh (`qa`) |
+| Vũ Lương Duy (2A202603945) | `vuduy21` | `client/ui` | Scrum/Release | Lương Đức Anh (`qa`) |
 | Lương Đức Anh (2A202603931) | `…` | `qa` | QA lead | Vũ Lương Duy (`client/ui`) |
 
 **Vai quy trình:** PO (đầu mối hỏi giảng viên, giữ `docs/clarify.md`) · Integrator (giữ `docs/contracts/`, gắn tag) · QA lead · Scrum/Release. Có thể kiêm.
