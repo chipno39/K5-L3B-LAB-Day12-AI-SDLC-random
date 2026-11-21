@@ -6,8 +6,12 @@
 - 1 hành động cho Phase 3: Trước khi code Phase 3, chốt chữ ký giao diện `runner` ↔ `sim/*` ↔ `live/ui` trong 3 phút đầu và chạy đủ cả test unit + headless + live trước mốc đóng băng 10 phút (Người nhận: Đạt `chipno39` & Đức Anh `ldlda`).
 
 ## Phase 4 (cuối)
-- Rà lại hành động Phase 2: đã làm chưa? vì sao?
-- Điều tốt / điều tệ:
-- Số liệu: số commit theo người, cách đọc code của nhau, token theo người:
-- Một lần AI sai và cách nhóm phát hiện:
-- Nếu làm lại, đổi gì:
+- **Rà lại hành động Phase 2** ("chốt chữ ký giao diện `runner` ↔ `sim/*` ↔ `live/ui` trong 3 phút đầu; chạy đủ unit + headless + live trước đóng băng 10 phút"): **làm được một phần.**
+  - Đã làm: Đạt chốt schema và `docs/contracts/README.md` trước khi cả nhóm code, đẩy nền v1.2 lên nhánh riêng `feat/p3-freshness-v12` để `main` không vỡ; Đức Anh chạy bộ test tích hợp trước tag (102/102 ở `phase-3`); `tests/test_live_day.py` kiểm lớp `live` ở chế độ `day` (unit mức HTTP).
+  - Chưa làm đủ: chữ ký giao diện chỉ chốt ở mức **danh sách trường**, chưa có mẫu JSON; nên `fresh` là số thực dài (99.666…) chỉ lộ ra khi UI chạy trên snapshot thật. Phần "live" mới được kiểm bằng test HTTP + ảnh chụp từ snapshot thật, **chưa ai chơi tay trọn vòng ngày trên trình duyệt thật** trước mốc đóng băng.
+  - Vì sao: chuỗi phụ thuộc gather → quan → QA khiến UI chỉ kiểm được trên dữ liệu thật khi `qa/phase-3` đã gộp quan v1.2; còn lại ~10 phút thì hết giờ.
+- **Điều tốt:** ranh giới file theo 4 module nên các lần gộp (`duy`, `qa/*`, `feat/*`) không xung đột code; đổi schema kho trên nhánh riêng giữ `main` xanh; contract/CHANGELOG cập nhật theo từng phase; mỗi phase đều có bằng chứng (ảnh chụp từ snapshot thật, harness chạy được lại).
+- **Điều tệ:** nhiều chỗ `quan` lệch PRD (`hand`, `order_status`, `no_dish`…) chỉ lộ khi *đọc code* chứ không phải khi *chạy test sớm*; UI chưa có kiểm thử tự động ngoài harness canvas giả; máy Windows không có `python3` làm test hộp đen đỏ ngay từ đầu; "màn chờ" của UI làm thời gian thật của lượt chơi giãn ra.
+- **Số liệu** (commit không tính merge, mọi nhánh, tại lúc ghi): `vuduy21` 23 · `lda` 12 · `datnxhe181631fpt` 12 · `Huy Quach` 10 (cộng 9 commit khung ban đầu của giảng viên, tác giả "Hai Duong"). Cả 4/4 thành viên vượt mốc ≥ 3 commit. Cách đọc code của nhau: thỏa thuận Đạt ↔ Huy, Duy ↔ Đức Anh; thực tế Duy đọc `quan.py` của Huy và lập danh sách điểm lệch PRD để báo Huy, Đạt review và gộp các nhánh còn lại. Token (ước tính trong `docs/ai-usage-log.md`): Đạt ~25k + 30k + 28k, Huy ~15k; **Duy và Đức Anh không đo được** (công cụ không hiển thị), nên số liệu token không đầy đủ.
+- **Một lần AI sai và cách nhóm phát hiện:** AI (phía UI) hiển thị thẳng `stock` làm "kho khả dụng", trong khi PRD mục D nói `stock` gồm cả phần khách đã giữ chỗ → hiển thị dư khi có khách. Phát hiện khi đối chiếu PRD và hỏi lại PO (Huy) ở Phase 1; sửa thành `stock` trừ `reserved`, về sau trừ đúng ID cá thể ở v1.2. (Lần AI sai ở phía sim của Đạt — snapshot trả tham chiếu list — xem retro Phase 2.)
+- **Nếu làm lại, đổi gì:** (1) chốt **mẫu JSON snapshot** ngay đầu mỗi phase, không chỉ danh sách trường; (2) chơi tay một vòng ngày ở giữa phase thay vì dồn kiểm cuối; (3) viết test tự động cho UI sớm hơn; (4) cài alias `python3` hoặc đổi `headless_cmd` cho Windows ngay từ kickoff; (5) viết phản tư và retro rải theo từng phase thay vì dồn về cuối.
