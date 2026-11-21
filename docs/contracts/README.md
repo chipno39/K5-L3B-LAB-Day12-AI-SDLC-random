@@ -1,19 +1,19 @@
-# Hợp đồng tích hợp — Nhóm `random` (Test Contract v1.0)
+# Hợp đồng tích hợp — Nhóm `random` (Test Contract v1.1)
 
-> Chốt ở Phase 1 giữa 4 module (`sim/gather`, `sim/quan`, `client/ui`, `qa`). Khi cần thay đổi ở phase sau, báo cả nhóm và ghi lại lý do.
+> Cập nhật lên **Contract v1.1 (Phase 2)** giữa 4 module (`sim/gather`, `sim/quan`, `client/ui`, `qa`). Khi cần thay đổi ở phase sau, báo cả nhóm và ghi lại lý do.
 
 ---
 
 ## 1. Schema file kho (`gather` → `quan`)
 
-Khớp PRD-0 mục G, dùng mẫu hợp lệ tại [`inventory.sample.json`](inventory.sample.json):
+Khớp PRD-0 mục G & TICKET-02, dùng mẫu hợp lệ tại [`inventory.sample.json`](inventory.sample.json):
 
 ```json
 {"items":{"bong_sung":2,"ca_loc":1}}
 ```
 
 * Chỉ có 1 khóa gốc `"items"`: map `kind -> int >= 0`.
-* 4 `kind` hợp lệ ở v1.0: `ca_loc`, `ca_linh`, `bong_dien_dien`, `bong_sung`.
+* 6 `kind` hợp lệ ở v1.1: `ca_loc`, `ca_linh`, `ca_keo`, `bong_dien_dien`, `bong_sung`, `keo_neo`.
 * Bên ghi bỏ các khóa có giá trị `0`, sắp khóa theo thứ tự từ điển, ghi nguyên tử (file tạm cùng thư mục → `os.replace`). Kho rỗng là `{"items":{}}`.
 * Ghi **đúng một lần** khi `gather` kết thúc (`gather_end`: `docked` / `time` / `fainted` — ngất thì ghi rỗng). Chạm `--ticks` trước khi kết thúc buổi sáng thì **không** tạo/ghi đè file kho.
 * Bên đọc (`quan`) từ chối sai schema, `kind` lạ, số âm hoặc khai đồng thời `--inventory` và `scenario.quan.stock` (mã thoát `2`).
@@ -50,7 +50,20 @@ Khớp PRD-0 mục G, dùng mẫu hợp lệ tại [`inventory.sample.json`](inv
 | `gather` | `{"node_id", "kind", "amount"}` | Hái nút mặt nước thành công |
 | `fish_caught` | `{"fish_id", "kind", "yield"}` | Bắt cá dưới nước thành công (đủ sức chứa cho cả `yield`) |
 | `hold_full` | `{"action", "node_id" \| "fish_id", "required", "free"}` | `action` là `"gather"` hoặc `"catch"` |
+| `fish_spawned` | `{"id", "kind", "pos"}` | Sinh cá theo lịch `phase_tick = 360*k` (v1.1) |
+| `monster_hit` | `{"monster_id", "hp", "lost", "pos"}` | Cá Sấu chạm khi `d >= 10`, mất `floor(hold/2)` LIFO, `invuln = 90` (v1.1) |
 | `gather_end` | `{"reason", "inventory": {"items": ...}}` | `reason`: `"docked"` / `"time"` / `"fainted"` |
+
+### Vòng ngày (`day`), Pause & Shop (v1.1)
+
+| Sự kiện | `data` | Ghi chú |
+|---|---|---|
+| `day_start`, `phase_start` | `{}` | Mở Ngày / chuyển pha (`gather` → `quan` → `shop`) |
+| `day_plan` | `{"dishes", "ingredients"}` | Công bố kế hoạch D1–D5 ở đầu Ngày |
+| `paused`, `resumed` | `{}` | Tạm dừng/tiếp tục (`pause` cạnh lên) |
+| `bought` | `{"upgrade", "level", "price", "money"}` | Mua nâng cấp `oxygen` / `hp` trong Shop |
+| `buy_failed` | `{"action", "reason"}` | `reason`: `funds` / `max_level` / `out_of_stock` / `unknown` |
+| `shop_end` | `{"reason"}` | `reason`: `"done"` / `"time"` |
 
 ### Buổi tối (`quan` — phát bởi `chonoi/sim/quan.py`)
 
