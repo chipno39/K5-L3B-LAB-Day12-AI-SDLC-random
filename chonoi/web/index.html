@@ -140,6 +140,7 @@ function eventText(e) {
     case "choke": return [`Ngạt! Còn ${d.hp} Máu`, BAD];
     case "faint": return [d.cause === "monster" ? "Thủy quái đánh ngất Út Sen!" : "Út Sen ngất rồi…", BAD];
     case "monster_hit": return [`Thủy quái! Mất ${(d.lost || []).length} món, còn ${d.hp} Máu`, BAD];
+    case "spoiled": return [`Hàng ươn: ${kn(d.kind)}${d.item_id || d.id ? " " + (d.item_id || d.id) : ""}`, BAD];
     case "paused": return ["Tạm dừng", INFO];
     case "resumed": return ["Tiếp tục", INFO];
     case "bought": return [`Đã mua ${UPGRADE_NAME[d.upgrade] || d.upgrade} cấp ${d.level} (−${d.price}k)`, GOOD];
@@ -207,6 +208,26 @@ function ring(x, y, r, frac, color, width = 4) {
 function fmtTime(ticks) {
   const s = Math.ceil((ticks || 0) / 60);
   return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+// ---- kho cá thể (Contract v1.2): hold[] / stock[] là mảng {id, kind, fresh}; vẫn nhận dạng cũ (chuỗi kind, hoặc object kind -> số lượng)
+function asItems(v) {
+  if (Array.isArray(v)) return v.map((e) => (e && typeof e === "object" ? e : { id: null, kind: e, fresh: null }));
+  return Object.keys(v || {}).sort().flatMap((k) => Array.from({ length: v[k] }, () => ({ id: null, kind: k, fresh: null })));
+}
+const spoiledBelow = () => (snap && snap.freshness && snap.freshness.spoiled_below) || 30;   // ngưỡng ươn: lấy từ contract nếu có
+const isSpoiled = (it) => it.fresh != null && it.fresh < spoiledBelow();
+function kindCounts(v) { const o = {}; asItems(v).forEach((it) => { o[it.kind] = (o[it.kind] || 0) + 1; }); return o; }
+const freshColor = (f) => (f == null ? "#9fb3c0" : f < spoiledBelow() ? "#c46a4a" : f < 60 ? "#e8c040" : "#7bd88f");
+function itemSummary(items) {   // "cá lóc ×2 (tươi 85%), cá linh ×1 (1 ươn)"
+  const g = {};
+  items.forEach((it) => { (g[it.kind] = g[it.kind] || []).push(it); });
+  const ks = Object.keys(g).sort();
+  return ks.length ? ks.map((k) => {
+    const a = g[k], known = a.filter((x) => x.fresh != null), bad = a.filter(isSpoiled).length, extra = [];
+    if (known.length) extra.push(`tươi ${Math.round(known.reduce((s, x) => s + x.fresh, 0) / known.length)}%`);
+    if (bad) extra.push(`${bad} ươn`);
+    return `${kn(k)} ×${a.length}` + (extra.length ? ` (${extra.join(", ")})` : "");
+  }).join(", ") : "(trống)";
 }
 function itemList(items) {
   const ks = Object.keys(items || {}).filter((k) => items[k] > 0);
@@ -301,7 +322,7 @@ function overlay(w, h) {
     text("Buổi sáng kết thúc", w / 2, by + 44, { align: "center", size: 24, bold: true });
     text(why, w / 2, by + 76, { align: "center", size: 17, color: snap.reason === "fainted" ? BAD : GOOD });
     text("Mang về quán:", w / 2, by + 114, { align: "center", size: 13, color: "#c9bba3" });
-    text(itemList(items || {}), w / 2, by + 138, { align: "center", size: 16 });
+    text(itemSummary(asItems(items || [])), w / 2, by + 138, { align: "center", size: 16 });
   } else {
     text("Hết ca tối", w / 2, by + 44, { align: "center", size: 24, bold: true });
     text(`Thu nhập ${snap.earned ?? 0}k · Uy tín ${(snap.reputation ?? 0).toFixed(1)}`, w / 2, by + 86, { align: "center", size: 17 });
@@ -395,7 +416,7 @@ function drawScreen(w, h) {
     add(`Buổi tối · Ngày ${day}`, { size: 30, bold: true, color: "#ffe08a" });
     add(why, { size: 15, color: ge.reason === "fainted" ? BAD : GOOD }); gap();
     add("Hàng mang về", { bold: true, color: "#ffe08a" });
-    add(itemList(((ge.inventory || {}).items) || {}), { size: 15 }); gap();
+    add(itemSummary(asItems(((ge.inventory || {}).items) || [])), { size: 15 }); gap();
     if (Object.keys(planDishes()).length) { add("Thực đơn hôm nay", { bold: true, color: "#ffe08a" }); add(plainList(planDishes(), (k, n) => `${dishName(k)} ×${n}`), { size: 14 }); gap(); }
     add("Nhấn Enter để mở quán", { bold: true, color: GOOD });
   } else if (sc === "day_result") {
@@ -452,7 +473,7 @@ function drawShop(w, h) {
   });
   const stockY = by + 270;
   text("Nguyên liệu còn lại (không mang sang ngày mai)", w / 2, stockY, { size: 13, align: "center", color: "#c9bba3" });
-  wrapLines(itemList(snap.stock), bw - 40, 14).forEach((ln, i) => text(ln, w / 2, stockY + 24 + i * 20, { size: 14, align: "center" }));
+  wrapLines(itemSummary(asItems(snap.stock)), bw - 40, 14).forEach((ln, i) => text(ln, w / 2, stockY + 24 + i * 20, { size: 14, align: "center" }));
   const last = (snap.day || 1) >= (snap.days_target || 1), btn = { x: w / 2 - 170, y: by + bh - 60, w: 340, h: 44 };
   rr(btn.x, btn.y, btn.w, btn.h, 22); ctx.fillStyle = "#ffe08a"; ctx.fill();
   text(last ? "Xong — kết thúc (Enter)" : "Xong — sang ngày mới (Enter)", w / 2, btn.y + 22, { size: 16, bold: true, align: "center", base: "middle", color: "#3a2a12" });
@@ -639,7 +660,7 @@ function drawGather(w, h) {
   // danh sách cần lấy hôm nay (chế độ day): so giỏ với kế hoạch ngày
   const need = planIngr(), needKeys = Object.keys(need);
   if (needKeys.length && w >= 840) {
-    const have = counts(snap.hold || []), px0 = w - 252, ph = 34 + needKeys.length * 20;
+    const have = kindCounts(snap.hold), px0 = w - 252, ph = 34 + needKeys.length * 20;
     panel(px0, 42, 240, ph, 0.7);
     text("Cần lấy hôm nay", px0 + 12, 62, { size: 13, bold: true, color: "#ffe08a" });
     needKeys.sort().forEach((k, i) => {
@@ -650,22 +671,31 @@ function drawGather(w, h) {
   }
   // giỏ
   if (snap.hold && snap.hold_capacity) {
-    const cap = snap.hold_capacity, bw = Math.min(w - 16, 60 + cap * 42), y0 = h - bottom + 8;
+    const hold = asItems(snap.hold), cap = snap.hold_capacity, bw = Math.min(w - 16, 60 + cap * 42), y0 = h - bottom + 8;
     panel(8, y0, bw, bottom - 16);
     const sz = Math.min(34, (bw - 24) / cap - 4);
     for (let i = 0; i < cap; i++) {
-      const x0 = 18 + i * (sz + 4);
+      const x0 = 18 + i * (sz + 4), it = hold[i];
       rr(x0, y0 + 10, sz, sz, 6); ctx.fillStyle = "rgba(255,255,255,.1)"; ctx.fill();
-      if (snap.hold[i]) icon(snap.hold[i], x0 + sz / 2 + 2, y0 + 10 + sz / 2, sz * 0.32);
+      if (!it) continue;
+      icon(it.kind, x0 + sz / 2 + 2, y0 + 10 + sz / 2, sz * 0.32);
+      if (it.fresh == null) continue;
+      if (isSpoiled(it)) {                                   // hàng ươn: phủ xanh xám + nhãn
+        rr(x0, y0 + 10, sz, sz, 6); ctx.fillStyle = "rgba(96,120,48,.6)"; ctx.fill();
+        rr(x0 + 0.5, y0 + 10.5, sz - 1, sz - 1, 6); ctx.strokeStyle = "#c46a4a"; ctx.lineWidth = 1.5; ctx.stroke();
+        text("ươn", x0 + sz / 2, y0 + 10 + sz * 0.36, { size: 9, bold: true, align: "center", base: "middle", color: "#f4e9a0" });
+      }
+      ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(x0 + 3, y0 + 10 + sz - 6, sz - 6, 3);   // thanh độ tươi
+      ctx.fillStyle = freshColor(it.fresh); ctx.fillRect(x0 + 3, y0 + 10 + sz - 6, (sz - 6) * clamp01(it.fresh / 100), 3);
     }
-    const full = snap.hold.length >= cap;
-    text(`Giỏ ${snap.hold.length}/${cap}${full ? " — ĐẦY" : ""}  ${itemList(counts(snap.hold))}`, 18, y0 + sz + 32, { size: 12, color: full ? BAD : "#e7d9bf" });
+    const full = hold.length >= cap, bad = hold.filter(isSpoiled).length;
+    wrapLines(`Giỏ ${hold.length}/${cap}${full ? " — ĐẦY" : ""}  ${itemSummary(hold)}`, bw - 20, 12).slice(0, 2).forEach((ln, i) =>
+      text(ln, 18, y0 + sz + 24 + i * 13, { size: 12, color: bad ? "#ffb08a" : full ? BAD : "#e7d9bf" }));
   }
   drawPrompt(msgPrompt, w, h - bottom - 14); msgPrompt = "";
   text("WASD/mũi tên bơi · E hái / cập bến · Space bắt cá · R chơi lại", w - 10, h - 12, { size: 12, align: "right", color: "#c9bba3" });
 }
 let msgPrompt = "";
-function counts(arr) { const o = {}; arr.forEach((k) => (o[k] = (o[k] || 0) + 1)); return o; }
 
 // ====================== QUÁN: nhìn từ trên xuống, x sang phải, z lên (bắc) ======================
 // order_status theo PRD (reserved/assigned/served/unfulfillable) và theo sim hiện tại (waiting/cooking/eating): nhận cả hai
@@ -700,11 +730,20 @@ function drawQuan(w, h) {
   const hd = hr && typeof hr === "object" ? hr.dish_id : hr;
   const hand = hd ? { dish_id: hd, order_id: hr && typeof hr === "object" ? hr.order_id : null } : null;
   const customers = snap.customers || [];
-  // kho khả dụng = tồn trừ phần khách đang giữ chỗ (stock trong snapshot là kho vật lý, gồm cả phần giữ)
-  const avail = Object.assign({}, snap.stock || {});
-  customers.forEach((c) => Object.keys(c.reserved || {}).forEach((k) => { avail[k] = (avail[k] || 0) - c.reserved[k]; }));
-  Object.keys(avail).forEach((k) => { avail[k] = Math.max(0, avail[k]); });
-  const cookableNow = (c) => { const rc = (menu[c.dish_id] || {}).recipe || {}; return Object.keys(rc).every((k) => ((snap.stock || {})[k] || 0) >= rc[k]); };
+  // kho khả dụng = kho trừ phần khách đang giữ chỗ (stock trong snapshot là kho vật lý, gồm cả phần giữ)
+  // v1.2: stock[] là mảng cá thể, reserved là mảng ID → bỏ đúng các cá thể bị giữ; dạng cũ: trừ theo số lượng
+  let availItems;
+  if (Array.isArray(snap.stock)) {
+    const rid = new Set(); customers.forEach((c) => Array.isArray(c.reserved) && c.reserved.forEach((id) => rid.add(id)));
+    availItems = asItems(snap.stock).filter((it) => !rid.has(it.id));
+  } else {
+    const a = Object.assign({}, snap.stock || {});
+    customers.forEach((c) => Object.keys(c.reserved || {}).forEach((k) => { a[k] = (a[k] || 0) - c.reserved[k]; }));
+    Object.keys(a).forEach((k) => { a[k] = Math.max(0, a[k]); });
+    availItems = asItems(a);
+  }
+  const avail = kindCounts(availItems), stockCnt = kindCounts(snap.stock);
+  const cookableNow = (c) => { const rc = (menu[c.dish_id] || {}).recipe || {}; return Object.keys(rc).every((k) => (stockCnt[k] || 0) >= rc[k]); };
   const byTable = {}; customers.forEach((c) => (byTable[c.table_id] = c));
   // bếp
   (snap.stoves || []).forEach((st) => {
@@ -793,7 +832,7 @@ function drawQuan(w, h) {
   }
   text(`${rep.toFixed(1)}`, 365, 44, { size: 16, color: "#e7d9bf" });
   text(`Điểm ${snap.score ?? 0}`, 420, 44, { size: 16, color: "#e7d9bf" });
-  text("Kho khả dụng: " + itemList(avail), 22, 63, { size: 12, color: "#c9bba3" });
+  text("Kho khả dụng: " + itemSummary(availItems), 22, 63, { size: 12, color: availItems.some(isSpoiled) ? "#ffb08a" : "#c9bba3" });
   if (snap.day) text(`Ngày ${snap.day}/${snap.days_target || "?"} · Tối`, w - sideW - 22, 30, { size: 13, bold: true, align: "right", color: "#ffe08a" });
   // khung bên: đơn + thực đơn (chế độ day: chỉ các món trong kế hoạch ngày)
   if (sideW) {
