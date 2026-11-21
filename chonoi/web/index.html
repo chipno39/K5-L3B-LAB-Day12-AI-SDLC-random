@@ -214,7 +214,7 @@ function drawToasts(w, h) {
   });
 }
 function drawPrompt(msg, w, y) {
-  if (!msg) return;
+  if (!msg || snap.finished) return;
   ctx.font = "bold 15px system-ui, sans-serif";
   const tw = ctx.measureText(msg).width + 28;
   rr(w / 2 - tw / 2, y - 18, tw, 30, 15); ctx.fillStyle = "rgba(255,224,138,.92)"; ctx.fill();
