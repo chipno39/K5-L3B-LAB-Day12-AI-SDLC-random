@@ -105,7 +105,13 @@ class Session:
         return row
 
     def _current_plan(self):
-        return self.plans.get(self.day, {"dishes": {}, "ingredients": {}})
+        if self.day in self.plans:
+            return self.plans[self.day]
+        if self.plans:
+            cycle_day = ((self.day - 1) % 5) + 1
+            if cycle_day in self.plans:
+                return self.plans[cycle_day]
+        return {"dishes": {}, "ingredients": {}}
 
     def _start_day(self, emit_to, tick_override=None):
         self.phase = "gather"

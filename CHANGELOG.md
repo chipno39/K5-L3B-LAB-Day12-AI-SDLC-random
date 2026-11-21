@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.0.0 — Phase 4 — Contract v1.3] — Phát hành chính thức
+* Nâng `game.contract.json` lên `contract_version: "1.3"`, bổ sung `bench_cmd` (`python3 -m chonoi.bench`) và `soak_cmd` (`python3 -m chonoi.soak`).
+* Thêm `chonoi/bench.py` (cảnh lặn 1280×720, làm nóng 3s + đo 30s, xuất `bench.json` đủ 5 trường `avg_fps`, `p1_low_fps`, `frames`, `measured_s`, `load_ms`).
+* Thêm `chonoi/soak.py` (chạy 10 Ngày liên tiếp bằng bot tất định, lặp kế hoạch D1–D5 ở Ngày 6–10, giữ tiến trình xuyên suốt, `crashes = 0`).
+* Hoàn thiện cảnh báo dễ nhận biết (thủy quái gần, oxy sắp hết, khách sắp giận) kèm chế độ Tương phản cao (High Contrast), tài liệu đóng gói, retro tổng kết và phản tư cá nhân.
+
 ## [Phase 3 — Contract v1.2] — Mùa Nước Nổi (Breaking Change)
 
 ### Breaking Changes
