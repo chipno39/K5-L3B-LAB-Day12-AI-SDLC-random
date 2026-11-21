@@ -373,7 +373,11 @@ let msgPrompt = "";
 function counts(arr) { const o = {}; arr.forEach((k) => (o[k] = (o[k] || 0) + 1)); return o; }
 
 // ====================== QUÁN: nhìn từ trên xuống, x sang phải, z lên (bắc) ======================
-const ORDER_TEXT = { reserved: "chờ nấu", assigned: "đang làm món", served: "đang ăn", unfulfillable: "hết nguyên liệu" };
+// order_status theo PRD (reserved/assigned/served/unfulfillable) và theo sim hiện tại (waiting/cooking/eating): nhận cả hai
+const ORDER_TEXT = { reserved: "chờ nấu", waiting: "chờ nấu", assigned: "đang làm món", cooking: "đang làm món",
+                     served: "đang ăn", eating: "đang ăn", unfulfillable: "hết nguyên liệu" };
+const isEating = (c) => c.state === "eating" || c.order_status === "served" || c.order_status === "eating";
+const isPending = (c) => !isEating(c) && (c.order_status === "reserved" || c.order_status === "waiting");
 function drawQuan(w, h) {
   const meta = snap.meta || {}, menu = snap.menu || {};
   const b = meta.bounds || { x: [0, 16], z: [0, 10] };
@@ -396,8 +400,16 @@ function drawQuan(w, h) {
     ctx.fillStyle = "rgba(255,214,102,.12)"; ctx.beginPath(); ctx.arc(bx, by, 14, 0, Math.PI * 2); ctx.fill();
   }
   const p = snap.player;
-  const hand = snap.hand && typeof snap.hand === "object" ? snap.hand : null;
+  // hand: chuỗi dish_id (sim hiện tại) hoặc payload {order_id,dish_id,base_price} (PRD): nhận cả hai
+  const hr = snap.hand;
+  const hd = hr && typeof hr === "object" ? hr.dish_id : hr;
+  const hand = hd ? { dish_id: hd, order_id: hr && typeof hr === "object" ? hr.order_id : null } : null;
   const customers = snap.customers || [];
+  // kho khả dụng = tồn trừ phần khách đang giữ chỗ (stock trong snapshot là kho vật lý, gồm cả phần giữ)
+  const avail = Object.assign({}, snap.stock || {});
+  customers.forEach((c) => Object.keys(c.reserved || {}).forEach((k) => { avail[k] = (avail[k] || 0) - c.reserved[k]; }));
+  Object.keys(avail).forEach((k) => { avail[k] = Math.max(0, avail[k]); });
+  const cookableNow = (c) => { const rc = (menu[c.dish_id] || {}).recipe || {}; return Object.keys(rc).every((k) => ((snap.stock || {})[k] || 0) >= rc[k]); };
   const byTable = {}; customers.forEach((c) => (byTable[c.table_id] = c));
   // bếp
   (snap.stoves || []).forEach((st) => {
@@ -422,7 +434,7 @@ function drawQuan(w, h) {
     text(tb.id, cx, cy + 4, { size: 12, align: "center", color: "#fff" });
     const c = byTable[tb.id];
     if (!c) return;
-    const gx = cx, gy = cy - 1.7 * s, eating = c.state === "eating" || c.order_status === "served";
+    const gx = cx, gy = cy - 1.7 * s, eating = isEating(c);
     ctx.fillStyle = "#e2a577"; ctx.beginPath(); ctx.arc(gx, gy, 0.5 * s, 0, Math.PI * 2); ctx.fill();   // khách
     ctx.fillStyle = eating ? "#6aa86a" : "#4f6f9a"; ctx.beginPath(); ctx.arc(gx, gy + 0.55 * s, 0.45 * s, Math.PI, 0); ctx.fill();
     // bong bóng món gọi
@@ -459,13 +471,16 @@ function drawQuan(w, h) {
     if (near) {
       if (near.st) {
         const st = near.st;
-        if (st.state === "idle") prompt = customers.some((c) => c.order_status === "reserved") ? "E: nấu món cho khách" : "Bếp đang trống";
+        if (st.state === "idle") {
+          const pend = customers.filter(isPending);
+          prompt = !pend.length ? "Bếp đang trống" : pend.some(cookableNow) ? "E: nấu món cho khách" : "Kho không đủ nguyên liệu";
+        }
         else if (st.state === "cooking") prompt = "Đang nấu…";
         else prompt = hand ? "Tay đang cầm món rồi" : "E: lấy món";
       } else {
         const c = near.c;
-        if (c.order_status === "served" || c.state === "eating") prompt = "Khách đang ăn";
-        else if (hand && hand.order_id === c.id) prompt = "E: phục vụ";
+        if (isEating(c)) prompt = "Khách đang ăn";
+        else if (hand && (hand.order_id ? hand.order_id === c.id : hand.dish_id === c.dish_id)) prompt = "E: phục vụ";
         else if (hand) prompt = "Sai món — món này của bàn khác";
         else prompt = "Chưa có món để bưng";
       }
@@ -483,7 +498,7 @@ function drawQuan(w, h) {
   }
   text(`${rep.toFixed(1)}`, 365, 44, { size: 16, color: "#e7d9bf" });
   text(`Điểm ${snap.score ?? 0}`, 420, 44, { size: 16, color: "#e7d9bf" });
-  text("Kho: " + itemList(snap.stock), 22, 63, { size: 12, color: "#c9bba3" });
+  text("Kho khả dụng: " + itemList(avail), 22, 63, { size: 12, color: "#c9bba3" });
   // khung bên: đơn + thực đơn
   if (sideW) {
     const px0 = w - sideW + 4;
@@ -505,7 +520,7 @@ function drawQuan(w, h) {
     Object.keys(menu).sort().forEach((id) => {
       y += 24;
       const m = menu[id];
-      const ok = Object.keys(m.recipe || {}).every((k) => ((snap.stock || {})[k] || 0) >= m.recipe[k]);
+      const ok = Object.keys(m.recipe || {}).every((k) => (avail[k] || 0) >= m.recipe[k]);
       ctx.fillStyle = dishColor(id); ctx.beginPath(); ctx.arc(px0 + 20, y - 4, 6, 0, Math.PI * 2); ctx.fill();
       text(`${dishName(id)} · ${m.price}k`, px0 + 32, y, { size: 12, bold: true, color: ok ? "#f3e9d8" : "#8d8070" });
       y += 15;
