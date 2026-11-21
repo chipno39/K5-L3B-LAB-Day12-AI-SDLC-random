@@ -70,7 +70,7 @@ class DayAndShopTests(unittest.TestCase):
         self.assertEqual(snaps[0]["player"]["oxygen_max_ticks"], 1800)
         self.assertEqual(snaps[2]["phase"], "shop")
         self.assertEqual(snaps[2]["stock"],
-                         item_units("ca_loc", "bong_sung", "bong_sung", fresh=99.988))
+                         item_units("ca_loc", "bong_sung", "bong_sung", fresh=99.9875))
         # Ngày 2 đã áp dụng nâng cấp oxygen cấp 1 (45s = 2700 tick) và money giảm còn 0, earned vẫn 200
         self.assertEqual(snaps[3]["day"], 2)
         self.assertEqual(snaps[3]["phase"], "gather")
