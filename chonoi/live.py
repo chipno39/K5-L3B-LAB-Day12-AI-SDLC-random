@@ -152,6 +152,7 @@ class LiveGame:
             snap["meta"] = self.tuning.get(phase, {})
             snap["menu"] = self.tuning["menu"]  # chỉ để UI hiện giá/công thức; không đi vào luật
             snap["shop"] = self.tuning.get("shop")
+            snap["freshness"] = self.tuning.get("freshness")  # v1.2: ngưỡng ươn... (chỉ để hiển thị)
             snap["events"] = list(self.events)
             snap["finished"] = s.done or self._halt
             snap["reason"] = ("error" if self._halt else s.reason) if snap["finished"] else None
