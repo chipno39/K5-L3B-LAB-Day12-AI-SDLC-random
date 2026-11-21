@@ -1,5 +1,7 @@
 """Focused unit tests for implemented quan behavior and its scenario input contract."""
 
+from helpers import item_units
+
 import unittest
 
 from chonoi.contract import load_contract
@@ -73,7 +75,7 @@ class QuanScenarioTests(unittest.TestCase):
     def test_valid_quan_fixture_accepts_stock_player_and_customer(self):
         fixture = {
             "player": {"pos": [8, 5], "vel": [0, 0]},
-            "stock": {"ca_loc": 2, "bong_sung": 1},
+            "stock": item_units("ca_loc", "ca_loc", "bong_sung"),
             "customers": [{"id": "C1", "table_id": "T1"}],
             "time_left_ticks": 90,
         }
@@ -93,8 +95,8 @@ class QuanScenarioTests(unittest.TestCase):
             with self.subTest(vel=vel), self.assertRaises(BadInput):
                 self.load_fixture({"player": {"vel": vel}})
 
-    def test_invalid_stock_item_or_count_is_rejected(self):
-        for stock in ({"mystery_item": 1}, {"ca_loc": -1}, {"ca_loc": True}):
+    def test_invalid_stock_item_or_freshness_is_rejected(self):
+        for stock in (item_units("mystery_item"), item_units("ca_loc", fresh=-1), item_units("ca_loc", fresh=True)):
             with self.subTest(stock=stock), self.assertRaises(BadInput):
                 self.load_fixture({"stock": stock})
 

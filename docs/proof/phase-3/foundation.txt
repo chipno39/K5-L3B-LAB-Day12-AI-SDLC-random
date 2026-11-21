@@ -1,0 +1,26 @@
+Base: fef6fc0 (Phase 3 foundation) + QA tests
+PYTHONPATH=tests:. python3 -m unittest test_qa_p3.LegacyInventoryTests test_gather_p3 test_quan_scenario -v
+test_count_inventory_exits_two_without_writing_output (test_qa_p3.LegacyInventoryTests) ... ok
+test_inventory_v12_roundtrip_and_rejects_old_count_schema (test_gather_p3.FreshnessV12Tests) ... ok
+test_monster_hit_and_faint_lost_are_individual_items_lifo (test_gather_p3.FreshnessV12Tests) ... ok
+test_multiple_spoiled_emitted_in_id_order (test_gather_p3.FreshnessV12Tests) ... ok
+test_new_item_starts_at_100_and_decays_from_next_tick (test_gather_p3.FreshnessV12Tests) ... ok
+test_pause_freezes_freshness_decay (test_gather_p3.FreshnessV12Tests) ... ok
+test_scenario_rejects_old_string_hold_and_spoiled_reserved (test_gather_p3.FreshnessV12Tests) ... ok
+test_spoiled_at_exact_threshold_30_once (test_gather_p3.FreshnessV12Tests) ... ok
+test_duplicate_customer_ids_and_table_assignments_are_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_invalid_stock_item_or_freshness_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_malformed_player_velocity_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_player_position_outside_contract_bounds_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_time_left_must_be_integer_inside_shift (test_quan_scenario.QuanScenarioTests) ... ok
+test_unknown_scenario_field_is_rejected (test_quan_scenario.QuanScenarioTests) ... ok
+test_valid_quan_fixture_accepts_stock_player_and_customer (test_quan_scenario.QuanScenarioTests) ... ok
+test_default_shift_timer_uses_contract_duration (test_quan_scenario.QuanSimulationTests) ... ok
+test_player_is_clamped_at_room_edge_and_velocity_stops (test_quan_scenario.QuanSimulationTests) ... ok
+test_shift_end_emits_time_event_once_at_last_tick (test_quan_scenario.QuanSimulationTests) ... ok
+test_walk_reaches_contract_speed_and_respects_bounds (test_quan_scenario.QuanSimulationTests) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.076s
+
+OK

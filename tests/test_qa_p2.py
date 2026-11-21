@@ -1,5 +1,7 @@
 """Black box checks for the v1.1 restaurant and day CLI."""
 
+from helpers import item_units
+
 import unittest
 from pathlib import Path
 
@@ -18,7 +20,7 @@ class Phase2QA(unittest.TestCase):
         recipe = self.tuning["menu"][dish]["recipe"]
         quan = self.tuning["quan"]
         with Workdir() as tmp:
-            inventory = write_json(tmp.path("inventory.json"), {"items": recipe})
+            inventory = write_json(tmp.path("inventory.json"), {"items": item_units(*("ca_keo" for _ in range(recipe["ca_keo"])))})
             log = tmp.path("quan.jsonl")
             code, err = run_headless(
                 "--mode", "quan", "--seed", "1",
@@ -32,8 +34,9 @@ class Phase2QA(unittest.TestCase):
         self.assertEqual(arrivals[0]["tick"], quan["first_customer_tick"])
         self.assertEqual(arrivals[0]["data"]["dish_id"], dish)
         final = snapshots(rows)[-1]
-        self.assertEqual(final["stock"], recipe)
-        self.assertEqual(final["customers"][0]["reserved"], recipe)
+        stock = final["stock"]
+        self.assertEqual([item["kind"] for item in stock], ["ca_keo"] * recipe["ca_keo"])
+        self.assertEqual(final["customers"][0]["reserved"], [item["id"] for item in stock])
 
     def test_quan_serving_new_dish_pays_once_after_eating(self):
         dish = "ca_keo_nuong"
