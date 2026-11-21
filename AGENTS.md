@@ -33,3 +33,4 @@
 
 ## Nhật ký tiến hóa AGENTS.md
 - **Phase 1:** Chốt lệnh chạy trên cả Linux/macOS và Windows PowerShell, giữ nguyên `python3` trong `game.contract.json` cho CI Linux, bổ sung skill `phase-release-check`.
+- **Phase 2:** Nâng cấp Test Contract v1.1 (`--mode day --days 1..5`, `Shop`, `Pause`, cá bơi/sinh, Cá Sấu M1/M2); tách test regression `test_gather_p2` & `test_day_pause_shop`; nhắc giữ bản sao list trong `snapshot()` tránh đột biến tham chiếu giữa các tick.
