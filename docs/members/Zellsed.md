@@ -1,12 +1,6 @@
 # Zellsed (Quách Ngọc Huy) — phản tư cá nhân (≤ 200 từ)
 
-- **Tôi đã làm (kèm link commit):**
-  - Đóng vai trò Product Owner (PO), chủ trì làm rõ các điểm mơ hồ về luật Mở Quán trong [docs/clarify.md](../clarify.md).
-  - Trực tiếp phát triển toàn bộ logic mô phỏng buổi tối (`sim/quan`) gồm Lát 3 (quản lý khách đến theo lịch, kho khả dụng, giữ chỗ `reserved`, xử lý kiên nhẫn và `no_dish`) và Lát 4 (tương tác bếp/bàn theo đúng thứ tự ưu tiên, nấu món, bưng phục vụ, tính tiền và tiền boa $20\%$) trong [chonoi/sim/quan.py](../../chonoi/sim/quan.py).
-- **Tôi đã review (kèm link):**
-  - Review hợp đồng tích hợp [docs/contracts/README.md](../contracts/README.md) của Integrator (Đạt) để đồng bộ hóa 100% schema sự kiện và snapshot khách hàng.
-  - Kiểm tra chéo logic `sim/gather` (phần dự phòng).
-- **AI sai ở đâu và tôi phát hiện thế nào:**
-  - AI ban đầu đặt tên trường trong sự kiện là `customer_id` thay vì `order_id` như bản hợp đồng tích hợp v1.0 đã thống nhất; tôi phát hiện qua việc đọc kỹ `docs/contracts/README.md` và sửa lại code để đảm bảo tương thích hoàn toàn.
-- **Điều tôi học được:**
-  - Thiết lập ranh giới sở hữu file rõ ràng ngay từ kickoff giúp cả nhóm code song song mà không hề bị xung đột merge.
+- **Tôi đã làm:** PO, giữ [docs/clarify.md](../clarify.md) (#1–#19). Viết `sim/quan` qua 4 phase: Lát 3–4 ([e4853a8](https://github.com/chipno39/K5-L3B-LAB-Day12-AI-SDLC-random/commit/e4853a8)); lọc thực đơn theo `day_plan`, 2 bếp/4 bàn ([e29375f](https://github.com/chipno39/K5-L3B-LAB-Day12-AI-SDLC-random/commit/e29375f)), đóng quán `closing` ([80cd126](https://github.com/chipno39/K5-L3B-LAB-Day12-AI-SDLC-random/commit/80cd126)); kho cá thể và độ tươi v1.2 ([ada1ece](https://github.com/chipno39/K5-L3B-LAB-Day12-AI-SDLC-random/commit/ada1ece), [225644b](https://github.com/chipno39/K5-L3B-LAB-Day12-AI-SDLC-random/commit/225644b)); README `v1.0.0`.
+- **Tôi đã review:** `runner.py` của Đạt (món lạ trong `day_plan` gây `KeyError`, mã 1 thay vì mã 2; Đạt đã chuyển sang `QuanSim(dishes=...)`); kiểm tra nhánh UI của Duy gộp với `feat/p3-quan` không xung đột và đọc đúng `stock[]`/`reserved[]`.
+- **AI sai ở đâu:** Ở P3, AI đoán spec trước khi có nền v1.2: dùng float thay vì `Fraction`, giữ lại theo id khách thay vì `(order_tick, table_id)`. Tôi phát hiện khi đối chiếu `docs/contracts/README.md` của Đạt. Khi viết README, AI ghi boa là `floor` và cổng 8765, sai với code (`round`, 8000). Tôi phát hiện bằng cách chạy lệnh thật.
+- **Điều tôi học được:** Chờ hợp đồng chốt rồi mới khóa chi tiết. Tài liệu phải được kiểm bằng lệnh chạy thật, không chép từ trí nhớ.
