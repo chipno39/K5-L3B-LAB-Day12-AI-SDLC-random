@@ -1,0 +1,20 @@
+QA 1984552 + closing 70e5662 (temporary merge)
+PYTHONPATH=tests:. python3 -m unittest test_quan_p2.QuanClosingTests test_quan_scenario.QuanSimulationTests.test_shift_end_emits_time_event_once_at_last_tick -v
+test_closing_pays_eating_then_waiting_leave_without_reputation_loss (test_quan_p2.QuanClosingTests) ... ok
+test_empty_shop_closes_with_only_quan_end (test_quan_p2.QuanClosingTests) ... ok
+test_shift_end_emits_time_event_once_at_last_tick (test_quan_scenario.QuanSimulationTests) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK
+PYTHONPATH=tests:. python3 -m unittest test_smoke_p1 test_gather_rules test_quan_scenario -q
+----------------------------------------------------------------------
+Ran 43 tests in 2.284s
+
+OK
+PYTHONPATH=tests:. python3 -m unittest discover -s tests -q
+----------------------------------------------------------------------
+Ran 82 tests in 3.514s
+
+OK
