@@ -1,5 +1,10 @@
-"""Unit test `sim/quan` theo Contract v1.1: 2 bếp, 4 bàn, 6 món, lọc thực đơn theo day_plan."""
+"""Unit test `sim/quan` theo Contract v1.1: 2 bếp, 4 bàn, 6 món, lọc thực đơn theo day_plan.
 
+Phase 3 (v1.2): đổi kho đếm `{kind: n}` sang kho cá thể `[{"id","kind","fresh"}]` vì contract
+v1.2 bỏ kho đếm (trả mã 2); hành vi được kiểm giữ nguyên.
+"""
+
+import copy
 import unittest
 
 from chonoi.contract import load_contract
@@ -9,14 +14,32 @@ from chonoi.inputs import InputPlayer
 from chonoi.rng import Streams
 from chonoi.sim.quan import QuanSim, filter_menu
 
-RICH_STOCK = {
-    "ca_linh": 40, "ca_loc": 40, "ca_keo": 40,
-    "bong_dien_dien": 40, "bong_sung": 40, "keo_neo": 40,
-}
+KINDS = ("bong_dien_dien", "bong_sung", "ca_keo", "ca_linh", "ca_loc", "keo_neo")
+
+
+def stock_items(counts, fresh=100):
+    """{kind: n} -> mảng cá thể I1.. (id theo thứ tự kind rồi số thứ tự)."""
+    out, n = [], 0
+    for kind in sorted(counts):
+        for _ in range(counts[kind]):
+            n += 1
+            out.append({"id": f"I{n}", "kind": kind, "fresh": fresh})
+    return out
+
+
+RICH_STOCK = stock_items({k: 40 for k in KINDS})
+
+
+def tuning_v12(tuning):
+    """Dùng `freshness` của contract nếu đã có (v1.2); chưa có thì tiêm số theo phân công Phase 3."""
+    t = copy.deepcopy(tuning)
+    t.setdefault("freshness", {"quan_decay_per_s": 0.25, "spoiled_below": 30})
+    return t
 
 
 def make_sim(tuning, scenario=None, inventory=None, dishes=None, seed=1):
-    return QuanSim(tuning, scenario or {}, Streams(seed), IdAllocator(), inventory=inventory, dishes=dishes)
+    return QuanSim(tuning_v12(tuning), scenario or {}, Streams(seed), IdAllocator(),
+                   inventory=inventory, dishes=dishes)
 
 
 def run_idle(sim, ticks):
@@ -102,7 +125,7 @@ class QuanDayPlanMenuTests(unittest.TestCase):
 
     def test_no_dish_when_stock_only_fits_dishes_outside_plan(self):
         # D1 = ca_loc_nuong_trui + goi_bong_sung; kho chỉ có ca_keo -> không món nào nấu được
-        sim = make_sim(self.tuning, inventory={"ca_keo": 10}, dishes=self.tuning["day_plan"][0]["dishes"])
+        sim = make_sim(self.tuning, inventory=stock_items({"ca_keo": 10}), dishes=self.tuning["day_plan"][0]["dishes"])
         events = run_idle(sim, self.tuning["quan"]["first_customer_tick"])
         self.assertEqual([n for n, _ in events], ["no_dish"])
 
@@ -134,7 +157,7 @@ class QuanClosingTests(unittest.TestCase):
         self.assertEqual((end["money"], end["shift_earned"], end["reputation"]), (84, 84, 3.0))
         # quán đóng: không còn khách, stock (kể cả phần từng giữ chỗ) còn nguyên cho Shop
         self.assertEqual(sim.snapshot()["customers"], [])
-        self.assertEqual(sim.stock["bong_sung"], RICH_STOCK["bong_sung"])
+        self.assertEqual(len(sim.stock), len(RICH_STOCK))
 
     def test_empty_shop_closes_with_only_quan_end(self):
         sim = make_sim(self.tuning, {"time_left_ticks": 1, "random_customers": False})
