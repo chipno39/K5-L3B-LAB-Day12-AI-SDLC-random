@@ -1,0 +1,5 @@
+python3 -m chonoi.soak --seed 1 --days 10 --out docs/proof/phase-4/qa-soak-1.json
+python3 -m chonoi.soak --seed 1 --days 10 --out docs/proof/phase-4/qa-soak-2.json
+PASS: two matching 10-day reports excluding wall-clock duration; crashes=0
+python3 -m chonoi.bench --seed 1 --warmup 3 --duration 30 --out docs/proof/phase-4/qa-bench.json
+PASS: {'avg_fps': 193.83, 'p1_low_fps': 171.58, 'frames': 5816, 'measured_s': 30.005, 'load_ms': 0.54}
