@@ -43,6 +43,11 @@ class QuanSimulationTests(unittest.TestCase):
         self.assertEqual(session.sim.pos[0], self.tuning["quan"]["bounds"]["x"][1])
         self.assertEqual(session.sim.vel[0], 0)
 
+    def test_default_shift_timer_uses_contract_duration(self):
+        session = Session("quan", self.tuning, {}, seed=1)
+        ticks = round(self.tuning["quan"]["duration_s"] * self.tuning["tick_hz"])
+        self.assertEqual(session.snapshot()["time_left_ticks"], ticks)
+
     def test_shift_end_emits_time_event_once_at_last_tick(self):
         session = Session("quan", self.tuning, {"time_left_ticks": 1}, seed=1)
         inp = InputPlayer([])
@@ -104,8 +109,8 @@ class QuanScenarioTests(unittest.TestCase):
                 {"id": "C2", "table_id": "T1"},
             ]},
         ]
-        for fixture in cases:
-            with self.subTest(fixture=fixture), self.assertRaises(BadInput):
+        for fixture, message in zip(cases, ("id trùng", "hai khách cùng bàn")):
+            with self.subTest(fixture=fixture), self.assertRaisesRegex(BadInput, message):
                 self.load_fixture(fixture)
 
     def test_time_left_must_be_integer_inside_shift(self):
