@@ -1,24 +1,42 @@
-"""Buổi tối — Mở Quán. KHUNG & LUẬT CHƠI (Lát 3 & Lát 4 — Test Contract v1.0).
+"""Buổi tối — Mở Quán. KHUNG & LUẬT CHƠI (Test Contract v1.1).
 
-Khớp hoàn toàn hợp đồng tích hợp tại docs/contracts/README.md và PRD-0 mục E, F.
+Khớp hợp đồng tích hợp tại docs/contracts/README.md và PRD-0 mục E, F.
+v1.1: số bếp/bàn/món đọc hoàn toàn từ `tuning` (B1-B2, T1-T4, 6 món); khi chạy `day`,
+thực đơn buổi tối chỉ gồm các món trong `day_plan` của Ngày đó (tham số `dishes`).
 """
 
 import math
 
+from ..errors import BadInput
 from ..ids import id_key, sort_by_id
 from .ramp import ramp_velocity
 
 TICK = 60.0
 
 
+def filter_menu(menu, dishes):
+    """Lọc thực đơn theo danh sách món của kế hoạch ngày (`day_plan[].dishes`).
+
+    `dishes=None` hoặc rỗng -> giữ nguyên cả thực đơn (chế độ `quan` đơn lẻ).
+    Món không có trong `tuning.menu` -> BadInput (mã thoát 2).
+    """
+    if not dishes:
+        return dict(menu)
+    unknown = sorted(d for d in dishes if d not in menu)
+    if unknown:
+        raise BadInput(f"day_plan có món không có trong menu: {', '.join(unknown)}")
+    wanted = set(dishes)
+    return {k: v for k, v in menu.items() if k in wanted}
+
+
 class QuanSim:
     mode = "quan"
     phase = "quan"
 
-    def __init__(self, tuning, scenario, streams, ids, inventory=None):
+    def __init__(self, tuning, scenario, streams, ids, inventory=None, dishes=None):
         t = tuning["quan"]
         self.t = t
-        self.menu = tuning["menu"]
+        self.menu = filter_menu(tuning["menu"], dishes)
         self.rng = streams
         self.ids = ids
 
@@ -89,7 +107,6 @@ class QuanSim:
         by_id = {d["id"]: dict(d) for d in defaults}
         for u in updates:
             if u["id"] not in by_id:
-                from ..errors import BadInput
                 raise BadInput(f"id bếp/bàn không tồn tại: {u['id']}")
             by_id[u["id"]].update(u)
         return sort_by_id(list(by_id.values()))
