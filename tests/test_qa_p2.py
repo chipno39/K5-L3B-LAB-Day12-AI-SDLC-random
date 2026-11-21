@@ -35,6 +35,42 @@ class Phase2QA(unittest.TestCase):
         self.assertEqual(final["stock"], recipe)
         self.assertEqual(final["customers"][0]["reserved"], recipe)
 
+    def test_quan_serving_new_dish_pays_once_after_eating(self):
+        dish = "ca_keo_nuong"
+        quan = self.tuning["quan"]
+        tick_hz = self.tuning["tick_hz"]
+        table = quan["tables"][0]
+        eat_ticks = round(quan["eat_s"] * tick_hz)
+        price = self.tuning["menu"][dish]["price"]
+        tip = round(price * quan["tip_rate"])
+        with Workdir() as tmp:
+            scenario = write_json(tmp.path("scenario.json"), {"quan": {
+                "player": {"pos": table["pos"]},
+                "hand": dish,
+                "customers": [{"id": "C1", "table_id": table["id"], "dish_id": dish,
+                               "state": "waiting", "order_status": "assigned",
+                               "patience_ticks_left": round(quan["patience_s"] * tick_hz)}],
+                "random_customers": False,
+            }})
+            inputs = write_json(tmp.path("inputs.json"), frames({"tick": 0, "interact": True}))
+            log = tmp.path("quan.jsonl")
+            code, err = run_headless(
+                "--mode", "quan", "--seed", "1", "--ticks", str(eat_ticks + 2),
+                "--scenario", scenario, "--inputs", inputs, "--out", log,
+            )
+            self.assertEqual(code, 0, err)
+            rows = read_jsonl(log)
+        served = events(rows, "served")
+        self.assertEqual([(e["tick"], e["data"]["order_id"]) for e in served], [(1, "C1")])
+        paid = events(rows, "paid")
+        self.assertEqual([(e["tick"], e["data"]["order_id"]) for e in paid], [(eat_ticks + 1, "C1")])
+        self.assertEqual(paid[0]["data"]["amount"], price + tip)
+        self.assertEqual(paid[0]["data"]["reason"], "finished_eating")
+        final = snapshots(rows)[-1]
+        self.assertEqual(final["money"], price + tip)
+        self.assertEqual(final["customers"], [])
+        self.assertIsNone(final["hand"])
+
     def test_day_cli_is_deterministic_through_shop_and_finishes_one_day(self):
         with Workdir() as tmp:
             scenario = write_json(tmp.path("scenario.json"), {
