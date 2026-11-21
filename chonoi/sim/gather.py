@@ -13,10 +13,11 @@ Thứ tự xử lý một bước (TICKET-02 mục 4.5):
   7. Nếu còn giờ và `random_fish` bật: cá bơi (đổi hướng bước 120, 240..., phản xạ mép), sau đó sinh cá theo lịch `phase_tick = 360*k` (`fish_spawned`).
 """
 
+from fractions import Fraction
 import math
 
 from ..ids import id_key, sort_by_id
-from ..inventory import hold_to_items
+from ..inventory import fresh_frac, fresh_num, hold_to_items
 from .ramp import ramp_velocity
 
 TICK = 60.0
@@ -27,14 +28,21 @@ class GatherSim:
     mode = "gather"
     phase = "gather"
 
-    def __init__(self, tuning, scenario, streams, ids, day_num=1, active_upgrades=None):
+    def __init__(self, tuning, scenario, streams, ids, day_num=1, active_upgrades=None, item_ids=None):
         t = tuning["gather"]
         self.t = t
         self.tuning = tuning
         self.rng = streams
         self.ids = ids
+        self.item_ids = item_ids if item_ids is not None else ids
         self.day_num = day_num
         self.phase_tick = 0
+
+        # Cấu hình độ tươi (Contract v1.2)
+        fcfg = tuning.get("freshness", {})
+        self.fresh_initial = fresh_frac(fcfg.get("initial", 100))
+        self.fresh_decay_per_tick = fresh_frac(fcfg.get("gather_decay_per_s", 0.5)) / 60
+        self.spoiled_below = fresh_frac(fcfg.get("spoiled_below", 30))
 
         # Áp dụng nâng cấp có hiệu lực (trong chế độ day)
         ups = active_upgrades or {}
@@ -67,7 +75,23 @@ class GatherSim:
         self.zero_oxy_ticks = p.get("zero_oxy_ticks", 0)
         self.invuln_ticks = p.get("invuln_ticks", 0)
         self.catch_cd_ticks = p.get("catch_cd_ticks", 0)
-        self.hold = list(scenario.get("hold", []))  # thứ tự nhặt, cuối mảng là mới nhất
+        # Giỏ cá thể v1.2: thứ tự nhặt, cuối mảng là mới nhất
+        self.hold = []
+        for raw_it in scenario.get("hold", []):
+            if isinstance(raw_it, dict):
+                if self.day_num > 1:
+                    iid = self.item_ids.new("I")
+                else:
+                    iid = raw_it["id"]
+                    self.item_ids.reserve(iid)
+                self.hold.append({
+                    "id": iid,
+                    "kind": raw_it["kind"],
+                    "fresh": fresh_frac(raw_it["fresh"]),
+                })
+            else:
+                iid = self.item_ids.new("I")
+                self.hold.append({"id": iid, "kind": raw_it, "fresh": self.fresh_initial})
         self.time_left_ticks = scenario.get("time_left_ticks", int(round(t["duration_s"] * TICK)))
 
         # Nút hái
@@ -144,7 +168,11 @@ class GatherSim:
         self.reason = None
 
     # --- giao diện cho runner -------------------------------------------------
-    def inventory_items(self) -> dict:
+    @staticmethod
+    def _pub_item(it: dict) -> dict:
+        return {"id": it["id"], "kind": it["kind"], "fresh": fresh_num(it["fresh"])}
+
+    def inventory_items(self) -> list:
         return hold_to_items(self.hold)
 
     def snapshot(self) -> dict:
@@ -154,7 +182,7 @@ class GatherSim:
                        "hp": self.hp, "hp_max": self.hp_max, "zero_oxy_ticks": self.zero_oxy_ticks,
                        "invuln_ticks": self.invuln_ticks, "catch_cd_ticks": self.catch_cd_ticks,
                        "at_surface": self._at_surface()},
-            "hold": list(self.hold), "hold_count": len(self.hold),
+            "hold": [self._pub_item(it) for it in self.hold], "hold_count": len(self.hold),
             "hold_capacity": self.t["hold_capacity"],
             "nodes": [{"id": n["id"], "pos": list(n["pos"]), "kind": n["kind"],
                        "ready": n["regrow_ticks"] == 0, "regrow_ticks": n["regrow_ticks"]}
@@ -185,6 +213,12 @@ class GatherSim:
                 n["regrow_ticks"] -= 1
                 if n["regrow_ticks"] == 0:
                     events.append(("node_regrown", {"node_id": n["id"]}))
+        # Hao độ tươi hàng có sẵn ở đầu bước (phát spoiled theo id)
+        for it in sort_by_id(self.hold):
+            prev = it["fresh"]
+            it["fresh"] = max(Fraction(0), prev - self.fresh_decay_per_tick)
+            if prev >= self.spoiled_below and it["fresh"] < self.spoiled_below:
+                events.append(("spoiled", {"item_id": it["id"], "kind": it["kind"], "location": "hold"}))
 
         # 2. bơi + chặn mép + dive/surface + oxy/ngạt/ngất
         was_at_surface = self._at_surface()
@@ -212,7 +246,7 @@ class GatherSim:
                     self.hp = max(0, self.hp - 1)
                     events.append(("choke", {"hp": self.hp}))
                     if self.hp <= 0:
-                        lost = list(reversed(self.hold))
+                        lost = [self._pub_item(it) for it in reversed(self.hold)]
                         self.hold = []
                         events.append(("faint", {"cause": "choke", "lost": lost, "hp": 0}))
                         self._finish("fainted", events)
@@ -240,7 +274,12 @@ class GatherSim:
                     required = int(self.t["node_yield"])
                     free = int(self.t["hold_capacity"]) - len(self.hold)
                     if free >= required:
-                        self.hold.extend([target["kind"]] * required)
+                        for _ in range(required):
+                            self.hold.append({
+                                "id": self.item_ids.new("I"),
+                                "kind": target["kind"],
+                                "fresh": self.fresh_initial,
+                            })
                         target["regrow_ticks"] = int(round(self.t["regrow_s"] * TICK))
                         events.append(("gather", {"node_id": target["id"], "kind": target["kind"], "amount": required}))
                     else:
@@ -255,7 +294,12 @@ class GatherSim:
                 required = int(self.t["fish_yield"][target["kind"]])
                 free = int(self.t["hold_capacity"]) - len(self.hold)
                 if free >= required:
-                    self.hold.extend([target["kind"]] * required)
+                    for _ in range(required):
+                        self.hold.append({
+                            "id": self.item_ids.new("I"),
+                            "kind": target["kind"],
+                            "fresh": self.fresh_initial,
+                        })
                     self.fish.remove(target)
                     self.catch_cd_ticks = int(round(self.t["catch_cooldown_s"] * TICK))
                     events.append(("fish_caught", {"fish_id": target["id"], "kind": target["kind"], "yield": required}))
@@ -457,7 +501,7 @@ class GatherSim:
                 self.hp = max(0, self.hp - 1)
                 loss_ratio = float(mcfg.get("loss_ratio", 0.5))
                 drop_n = math.floor(len(self.hold) * loss_ratio)
-                lost = [self.hold.pop() for _ in range(drop_n)]
+                lost = [self._pub_item(self.hold.pop()) for _ in range(drop_n)]
                 self.invuln_ticks = int(mcfg.get("invuln_ticks", 90))
 
                 dx = attacker["pos"][0] - self.pos[0]
@@ -475,7 +519,7 @@ class GatherSim:
                     "pos": list(self.pos),
                 }))
                 if self.hp <= 0:
-                    rem_lost = list(reversed(self.hold))
+                    rem_lost = [self._pub_item(it) for it in reversed(self.hold)]
                     self.hold = []
                     events.append(("faint", {"cause": "monster", "lost": rem_lost, "hp": 0}))
                     self._finish("fainted", events)

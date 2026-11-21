@@ -167,9 +167,7 @@ def _validate_gather(b, tuning):
     if "random_fish" in b and not isinstance(b["random_fish"], bool):
         raise BadInput("random_fish phải là boolean")
     if "hold" in b:
-        h = b["hold"]
-        if not isinstance(h, list) or any(k not in KINDS_V11 for k in h):
-            raise BadInput("hold phải là mảng id nguyên liệu hợp lệ")
+        h = validate_items(b["hold"], KINDS_V11)
         if len(h) > g["hold_capacity"]:
             raise BadInput("hold vượt sức chứa")
     p = b.get("player", {})
@@ -249,8 +247,10 @@ def _validate_quan(b, tuning):
     for arr in ("stoves", "tables", "customers"):
         if arr in b:
             _check_ids(arr, b[arr])
+    stock_by_id = None
     if "stock" in b:
-        validate_items(b["stock"])
+        items = validate_items(b["stock"], KINDS_V11)
+        stock_by_id = {it["id"]: it for it in items}
     p = b.get("player", {})
     if not isinstance(p, dict) or set(p) - QUAN_PLAYER_KEYS:
         raise BadInput("quan.player chỉ có pos và vel")
@@ -261,8 +261,25 @@ def _validate_quan(b, tuning):
         raise BadInput("player.vel phải là [x, z]")
     table_ids = [c.get("table_id") for c in b.get("customers", [])]
     known = {t["id"] for t in tuning["quan"]["tables"]} | {t.get("id") for t in b.get("tables", [])}
+    spoiled_below = tuning.get("freshness", {}).get("spoiled_below", 30)
+    used_reserved = set()
     for c in b.get("customers", []):
         if not isinstance(c.get("table_id"), str) or c["table_id"] not in known:
             raise BadInput(f"customers.{c['id']}: table_id phải là bàn có thật")
+        if "reserved" in c and c["reserved"] is not None:
+            res = c["reserved"]
+            if not isinstance(res, list) or any(not isinstance(x, str) or not x for x in res):
+                raise BadInput(f"customers.{c['id']}.reserved phải là mảng id cá thể (v1.2)")
+            if len(res) != len(set(res)):
+                raise BadInput(f"customers.{c['id']}.reserved có id trùng")
+            for iid in res:
+                if iid in used_reserved:
+                    raise BadInput(f"customers.{c['id']}.reserved dùng chung id {iid!r} với đơn khác")
+                used_reserved.add(iid)
+                if stock_by_id is not None:
+                    if iid not in stock_by_id:
+                        raise BadInput(f"customers.{c['id']}.reserved trỏ tới id không có trong stock: {iid!r}")
+                    if stock_by_id[iid]["fresh"] < spoiled_below:
+                        raise BadInput(f"customers.{c['id']}.reserved trỏ tới cá thể đã ươn: {iid!r}")
     if len(table_ids) != len(set(table_ids)):
         raise BadInput("hai khách cùng bàn")

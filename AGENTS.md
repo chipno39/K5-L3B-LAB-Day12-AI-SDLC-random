@@ -35,3 +35,4 @@
 - **Phase 1:** Chốt lệnh chạy trên cả Linux/macOS và Windows PowerShell, giữ nguyên `python3` trong `game.contract.json` cho CI Linux, bổ sung skill `phase-release-check`.
 - **Phase 2:** Nâng cấp Test Contract v1.1 (`--mode day --days 1..5`, `Shop`, `Pause`, cá bơi/sinh, Cá Sấu M1/M2); tách test regression `test_gather_p2` & `test_day_pause_shop`; nhắc giữ bản sao list trong `snapshot()` tránh đột biến tham chiếu giữa các tick.
 - **Phase 2 QA:** Bổ sung skill `qa-regression` cho kiểm chứng v1.1 và hồi quy Phase 1.
+- **Phase 3:** Chuyển Test Contract v1.2 (kho cá thể `[{id, kind, fresh}]`, từ chối kho đếm cũ mã `2`); dùng `fractions.Fraction` trong `chonoi/inventory.py` để giữ chính xác tuyệt đối ở ngưỡng ươn `< 30` và phép `floor`; giữ `IdAllocator` cho `I1..` xuyên pha và Ngày trong `runner.py`.

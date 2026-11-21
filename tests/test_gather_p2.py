@@ -81,7 +81,7 @@ class GatherP2FishSwimAndSpawn(unittest.TestCase):
         caught = ev_by_name(events, "fish_caught")
         self.assertEqual(len(caught), 1)
         self.assertEqual(caught[0]["data"], {"fish_id": "F1", "kind": "ca_keo", "yield": 2})
-        self.assertEqual(snaps[1]["hold"], ["ca_keo", "ca_keo"])
+        self.assertEqual([it["kind"] for it in snaps[1]["hold"]], ["ca_keo", "ca_keo"])
 
 
 class GatherP2MonstersAndFaint(unittest.TestCase):
@@ -100,8 +100,8 @@ class GatherP2MonstersAndFaint(unittest.TestCase):
         self.assertEqual(hits[0]["tick"], 1)
         self.assertEqual(hits[0]["data"]["monster_id"], "M1")
         self.assertEqual(hits[0]["data"]["hp"], 2)
-        self.assertEqual(hits[0]["data"]["lost"], ["keo_neo", "ca_keo"])
-        self.assertEqual(snaps[1]["hold"], ["ca_loc", "bong_sung", "ca_linh"])
+        self.assertEqual([it["kind"] for it in hits[0]["data"]["lost"]], ["keo_neo", "ca_keo"])
+        self.assertEqual([it["kind"] for it in snaps[1]["hold"]], ["ca_loc", "bong_sung", "ca_linh"])
         self.assertEqual(snaps[1]["player"]["invuln_ticks"], 90)
         m1_t1 = snaps[1]["monsters"][0]
         self.assertEqual(m1_t1["state"], "recoil")
@@ -124,9 +124,11 @@ class GatherP2MonstersAndFaint(unittest.TestCase):
         self.assertEqual(sess.tick, 1)
         self.assertEqual([e["name"] for e in events], ["monster_hit", "faint", "gather_end"])
         # floor(3/2)=1 mất lúc hit ("ca_linh"), còn 2 món mất LIFO lúc faint (["bong_sung", "ca_loc"])
-        self.assertEqual(events[0]["data"]["lost"], ["ca_linh"])
-        self.assertEqual(events[1]["data"], {"cause": "monster", "lost": ["bong_sung", "ca_loc"], "hp": 0})
-        self.assertEqual(events[2]["data"], {"reason": "fainted", "inventory": {"items": {}}})
+        self.assertEqual([it["kind"] for it in events[0]["data"]["lost"]], ["ca_linh"])
+        self.assertEqual(events[1]["data"]["cause"], "monster")
+        self.assertEqual(events[1]["data"]["hp"], 0)
+        self.assertEqual([it["kind"] for it in events[1]["data"]["lost"]], ["bong_sung", "ca_loc"])
+        self.assertEqual(events[2]["data"], {"reason": "fainted", "inventory": {"items": []}})
         self.assertEqual(snaps[1]["hold"], [])
 
     def test_monster_ignores_player_above_depth_10(self):
@@ -153,7 +155,7 @@ class GatherP2MonstersAndFaint(unittest.TestCase):
         _, snaps, events = run_gather(sc, ticks=1)
         self.assertEqual(len(ev_by_name(events, "choke")), 1)
         self.assertEqual(snaps[1]["player"]["hp"], 1)
-        self.assertEqual(snaps[1]["hold"], ["ca_loc", "bong_sung"])
+        self.assertEqual([it["kind"] for it in snaps[1]["hold"]], ["ca_loc", "bong_sung"])
 
 
 if __name__ == "__main__":
