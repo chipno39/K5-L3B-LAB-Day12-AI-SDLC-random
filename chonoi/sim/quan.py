@@ -10,21 +10,23 @@ khi cá thể đang giữ bị ươn -> nhả và thử giữ lại đúng 1 l�
 """
 
 import math
+from fractions import Fraction
 
 from ..errors import BadInput
 from ..ids import id_key, sort_by_id
+from ..inventory import fresh_frac, fresh_num, validate_items
 from .ramp import ramp_velocity
 
 TICK = 60.0
-_EPS = 1e-9
 
 
 def _fresh_cfg(tuning):
-    """Mọi số độ tươi của `quan` đọc từ contract tại MỘT chỗ (không hard-code trong luật)."""
+    """Mọi số độ tươi của `quan` đọc từ contract tại MỘT chỗ (không hard-code trong luật).
+    Dùng Fraction như gather/inventory để so ngưỡng 30 và floor giá chính xác tuyệt đối."""
     f = tuning["freshness"]
     return {
-        "decay_per_tick": float(f["quan_decay_per_s"]) / TICK,
-        "spoiled_below": float(f["spoiled_below"]),
+        "decay_per_tick": fresh_frac(f["quan_decay_per_s"]) / int(tuning.get("tick_hz", 60)),
+        "spoiled_below": fresh_frac(f["spoiled_below"]),
     }
 
 
@@ -39,22 +41,16 @@ def _freshest_key(it):
 
 
 def normalize_stock(raw):
-    """Nhận kho cá thể (mảng, hoặc {"items": [...]}) -> mảng {"id","kind","fresh"} sắp theo id."""
-    if isinstance(raw, dict):
-        if set(raw) != {"items"}:
-            raise BadInput("kho v1.2 phải là mảng cá thể hoặc {\"items\": [...]}")
+    """Kho cá thể (mảng, hoặc {"items": [...]}) -> mảng {"id","kind","fresh": Fraction} sắp theo id.
+    Kiểm schema bằng `inventory.validate_items` (kho đếm cũ -> BadInput, mã 2)."""
+    if isinstance(raw, dict) and set(raw) == {"items"}:
         raw = raw["items"]
-    if not isinstance(raw, list):
-        raise BadInput("kho v1.2 phải là mảng cá thể {id, kind, fresh} (kho đếm cũ không còn hợp lệ)")
-    out, seen = [], set()
-    for it in raw:
-        if not isinstance(it, dict) or set(it) != {"id", "kind", "fresh"}:
-            raise BadInput(f"cá thể kho sai schema: {it!r}")
-        if it["id"] in seen:
-            raise BadInput(f"trùng id cá thể kho: {it['id']}")
-        seen.add(it["id"])
-        out.append({"id": it["id"], "kind": it["kind"], "fresh": float(it["fresh"])})
-    return sort_by_id(out)
+    items = validate_items(raw)
+    return sort_by_id([{"id": it["id"], "kind": it["kind"], "fresh": fresh_frac(it["fresh"])} for it in items])
+
+
+def _out_item(it):
+    return {"id": it["id"], "kind": it["kind"], "fresh": fresh_num(it["fresh"])}
 
 
 def filter_menu(menu, dishes):
@@ -169,14 +165,14 @@ class QuanSim:
     def _reserved_ids(self):
         return {iid for c in self.customers for iid in c.get("reserved", [])}
 
-    def _available_items(self, extra_free=()):
-        """Cá thể khả dụng: còn trong kho, chưa ươn, chưa bị khách nào giữ (trừ `extra_free`)."""
-        taken = self._reserved_ids() - set(extra_free)
+    def _available_items(self):
+        """Cá thể khả dụng: còn trong kho, chưa ươn, chưa bị khách nào giữ."""
+        taken = self._reserved_ids()
         return [it for it in self.stock if it["id"] not in taken and not self._is_spoiled(it)]
 
-    def _reserve_for(self, dish, extra_free=()):
+    def _reserve_for(self, dish):
         """Chọn cá thể tươi nhất (hòa -> id nhỏ) cho từng kind của công thức. Thiếu -> None."""
-        avail = self._available_items(extra_free)
+        avail = self._available_items()
         picked = []
         for kind in sorted(self.menu[dish]["recipe"]):
             qty = self.menu[dish]["recipe"][kind]
@@ -187,26 +183,26 @@ class QuanSim:
         return sorted(picked, key=id_key)
 
     def _decay(self, events):
-        """Hao tươi mỗi tick; cá thể vừa tụt dưới ngưỡng -> `spoiled` (theo thứ tự id),
-        rồi khách đang giữ cá thể đó nhả và thử giữ lại 1 lần (theo thứ tự id khách)."""
+        """Hao tươi mỗi tick (kể cả hàng giữ chỗ); cá thể vừa tụt dưới ngưỡng -> `spoiled`
+        theo thứ tự id; rồi đơn đang giữ cá thể đó nhả hết và thử giữ lại đúng 1 lần,
+        theo thứ tự (order_tick, table_id)."""
         d, thr = self.fresh["decay_per_tick"], self.fresh["spoiled_below"]
         newly = []
         for it in self.stock:  # stock luôn sắp theo id
             before = it["fresh"]
-            it["fresh"] = round(max(0.0, before - d), 6)
+            it["fresh"] = max(Fraction(0), before - d)
             if before >= thr > it["fresh"]:
                 newly.append(it["id"])
-                events.append(("spoiled", {"item_id": it["id"], "id": it["id"], "kind": it["kind"],
-                                           "fresh": it["fresh"]}))
+                events.append(("spoiled", {"item_id": it["id"], "kind": it["kind"], "location": "stock"}))
         if not newly:
             return
         bad = set(newly)
-        for c in sort_by_id(self.customers):
-            if c["state"] != "waiting" or not bad.intersection(c.get("reserved", [])):
-                continue
-            own = list(c["reserved"])
+        hit = [c for c in self.customers
+               if c["state"] == "waiting" and bad.intersection(c.get("reserved", []))]
+        for c in hit:  # nhả hết trước, rồi mới giữ lại
             c["reserved"] = []
-            picked = self._reserve_for(c["dish_id"], extra_free=own) if c.get("dish_id") in self.menu else None
+        for c in sorted(hit, key=lambda c: (c.get("order_tick", 0), id_key(c["table_id"]))):
+            picked = self._reserve_for(c["dish_id"]) if c.get("dish_id") in self.menu else None
             if picked is None:
                 c["order_status"] = "unfulfillable"
             else:
@@ -258,7 +254,7 @@ class QuanSim:
 
         return {
             "player": {"pos": self.pos},
-            "stock": [dict(it) for it in self.stock],
+            "stock": [_out_item(it) for it in self.stock],
             "hand": self.hand,
             "stoves": [
                 {k: s.get(k) for k in ("id", "pos", "state", "dish", "cook_ticks_left", "ready_ticks")}
@@ -470,11 +466,12 @@ class QuanSim:
                 if pick:
                     dish, cust = pick
                     use = set(cust["reserved"])
-                    items = sorted((dict(it) for it in self.stock if it["id"] in use), key=_item_sort_key)
+                    used = sorted((it for it in self.stock if it["id"] in use), key=_item_sort_key)
+                    items = [_out_item(it) for it in used]
                     self.stock = [it for it in self.stock if it["id"] not in use]
                     cust["reserved"] = []
-                    avg_fresh = sum(it["fresh"] for it in items) / len(items)
-                    base_price = int(math.floor(self.menu[dish]["price"] * avg_fresh / 100 + _EPS))
+                    avg_fresh = sum((it["fresh"] for it in used), Fraction(0)) / len(used)
+                    base_price = math.floor(self.menu[dish]["price"] * avg_fresh / 100)
                     cust["base_price"] = base_price
                     st["state"] = "cooking"
                     st["dish"] = dish

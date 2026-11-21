@@ -50,7 +50,7 @@ class FreshnessDecayTests(unittest.TestCase):
         inv = [item("I1", "ca_loc", thr), item("I2", "ca_loc", thr - 1)]  # I2 đã ươn từ đầu
         sim = make_sim(self.tuning, {"random_customers": False}, inventory=inv)
         first = step(sim, 0)
-        self.assertEqual([(n, d["item_id"]) for n, d in first], [("spoiled", "I1")])
+        self.assertEqual(first, [("spoiled", {"item_id": "I1", "kind": "ca_loc", "location": "stock"})])
         self.assertEqual([n for n, _ in step(sim, 1)], [])
 
     def test_count_based_stock_is_rejected(self):
@@ -85,6 +85,18 @@ class FreshReservationTests(unittest.TestCase):
         step(sim, 0)
         c = sim.snapshot()["customers"][0]
         self.assertEqual((c["reserved"], c["order_status"]), (["I2"], "waiting"))
+
+    def test_rereserve_order_is_order_tick_then_table_id(self):
+        # C1 (T2) và C2 (T1) cùng order_tick, cùng mất cá giữ trong 1 tick, chỉ còn 1 con thay thế
+        inv = [item("I1", "ca_loc", self.thr), item("I2", "ca_loc", self.thr), item("I3", "ca_loc", 80)]
+        sc = {"random_customers": False, "customers": [
+            dict(one_customer("ca_loc_nuong_trui", reserved=["I1"], cid="C1", table="T2"), order_tick=5),
+            dict(one_customer("ca_loc_nuong_trui", reserved=["I2"], cid="C2", table="T1"), order_tick=5),
+        ]}
+        sim = make_sim(self.tuning, sc, inventory=inv)
+        step(sim, 0)
+        got = {c["id"]: (c["reserved"], c["order_status"]) for c in sim.snapshot()["customers"]}
+        self.assertEqual(got, {"C1": ([], "unfulfillable"), "C2": (["I3"], "waiting")})
 
     def test_reserved_item_spoils_without_replacement_becomes_unfulfillable(self):
         inv = [item("I1", "ca_loc", self.thr), item("I2", "ca_keo", 90)]
