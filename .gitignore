@@ -3,4 +3,5 @@ __pycache__/
 *.jsonl
 !tests/fixtures/*.jsonl
 .DS_Store
+tools/bin/
 /kho.json
